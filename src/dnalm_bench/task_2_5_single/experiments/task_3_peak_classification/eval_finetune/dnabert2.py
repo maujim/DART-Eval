@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
 from ....finetune import (
+    DNABERT2LoRAModel,
     PeaksEndToEndDataset,
     eval_finetuned_peak_classifier,
-    DNABERT2LoRAModel,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

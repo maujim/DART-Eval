@@ -3,8 +3,8 @@ import sys
 
 from ....finetune import (
     ChromatinEndToEndDataset,
-    train_finetuned_chromatin_model,
     MistralDNALoRAModel,
+    train_finetuned_chromatin_model,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

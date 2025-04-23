@@ -4,13 +4,13 @@ import sys
 from torch.utils.data import DataLoader
 
 from ....training import (
-    PeaksEmbeddingsDataset,
-    LargeCNNSlicedEmbeddingsPredictor,
-    train_predictor,
-    train_peak_classifier,
     CNNEmbeddingsPredictor,
-    CNNSlicedEmbeddingsPredictor,
     CNNSequenceBaselinePredictor,
+    CNNSlicedEmbeddingsPredictor,
+    LargeCNNSlicedEmbeddingsPredictor,
+    PeaksEmbeddingsDataset,
+    train_peak_classifier,
+    train_predictor,
 )
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")

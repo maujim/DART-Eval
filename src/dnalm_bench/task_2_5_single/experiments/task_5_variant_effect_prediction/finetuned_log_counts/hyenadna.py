@@ -1,14 +1,14 @@
 import os
 import sys
 
+import numpy as np
+import pandas as pd
+import polars as pl
 import torch
 
-from ....finetune import HyenaDNALoRAModel
-from ....evaluators import FinetunedVariantEvaluator
 from ....components import VariantDataset
-import polars as pl
-import pandas as pd
-import numpy as np
+from ....evaluators import FinetunedVariantEvaluator
+from ....finetune import HyenaDNALoRAModel
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

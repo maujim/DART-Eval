@@ -1,7 +1,7 @@
 import os
 
-from ....embeddings import SequenceBaselineSimpleEmbeddingExtractor
 from ....components import SimpleSequence
+from ....embeddings import SequenceBaselineSimpleEmbeddingExtractor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import wilcoxon
 import argparse
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy.stats import wilcoxon
 
 
 def parse_args():

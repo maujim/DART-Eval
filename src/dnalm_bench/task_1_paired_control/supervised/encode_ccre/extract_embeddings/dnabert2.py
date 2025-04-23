@@ -1,7 +1,7 @@
 import os
 
-from ...embeddings import DNABERT2EmbeddingExtractor
 from ....components import PairedControlDataset
+from ...embeddings import DNABERT2EmbeddingExtractor
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

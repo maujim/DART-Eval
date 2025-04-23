@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....finetune import train_finetuned_classifier, MistralDNALoRAModel
 from ....components import PairedControlDataset
+from ....finetune import MistralDNALoRAModel, train_finetuned_classifier
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

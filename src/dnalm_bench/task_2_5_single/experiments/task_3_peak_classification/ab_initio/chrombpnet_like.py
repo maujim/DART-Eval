@@ -2,9 +2,9 @@ import os
 import sys
 
 from ....finetune import (
+    LargeCNNClassifier,
     PeaksEndToEndDataset,
     train_finetuned_peak_classifier,
-    LargeCNNClassifier,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

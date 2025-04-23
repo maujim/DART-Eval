@@ -1,6 +1,7 @@
 import json
-import pandas as pd
 import sys
+
+import pandas as pd
 
 train_peaks = pd.read_csv(sys.argv[1], sep="\t")
 valid_peaks = pd.read_csv(sys.argv[2], sep="\t")

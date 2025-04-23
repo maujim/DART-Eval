@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....evaluators import HDEvaluator
 from ....components import FootprintingDataset
+from ....evaluators import HDEvaluator
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

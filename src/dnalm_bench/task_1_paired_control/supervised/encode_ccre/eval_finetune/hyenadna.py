@@ -1,12 +1,12 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
-from ....finetune import evaluate_finetuned_classifier, HyenaDNALoRAModel
 from ....components import PairedControlDataset
+from ....finetune import HyenaDNALoRAModel, evaluate_finetuned_classifier
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")

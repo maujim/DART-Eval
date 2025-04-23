@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....embeddings import GENALMEmbeddingExtractor
 from ....components import SimpleSequence
+from ....embeddings import GENALMEmbeddingExtractor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -1,7 +1,7 @@
 import os
 
-from ...embeddings import HyenaDNAEmbeddingExtractor
 from ....components import PairedControlDataset
+from ...embeddings import HyenaDNAEmbeddingExtractor
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

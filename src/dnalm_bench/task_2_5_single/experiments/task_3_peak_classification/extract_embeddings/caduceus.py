@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....embeddings import CaduceusEmbeddingExtractor
 from ....components import SimpleSequence
+from ....embeddings import CaduceusEmbeddingExtractor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

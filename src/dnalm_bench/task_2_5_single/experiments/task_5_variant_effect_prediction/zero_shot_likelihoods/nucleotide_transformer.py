@@ -1,9 +1,10 @@
 import os
 import sys
+
 import polars as pl
 
-from ....evaluators import NTVariantSingleTokenEvaluator
 from ....components import VariantDataset
+from ....evaluators import NTVariantSingleTokenEvaluator
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

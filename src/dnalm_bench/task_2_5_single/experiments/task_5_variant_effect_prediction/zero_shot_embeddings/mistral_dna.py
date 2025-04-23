@@ -1,10 +1,11 @@
 import os
 import sys
+
 import numpy as np
 import polars as pl
 
-from ....evaluators import MistralVariantEmbeddingEvaluator
 from ....components import VariantDataset
+from ....evaluators import MistralVariantEmbeddingEvaluator
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

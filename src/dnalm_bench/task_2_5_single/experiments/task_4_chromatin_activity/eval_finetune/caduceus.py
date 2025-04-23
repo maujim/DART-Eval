@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
 from ....finetune import (
+    CaduceusLoRAModel,
     ChromatinEndToEndDataset,
     evaluate_finetuned_chromatin_model,
-    CaduceusLoRAModel,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

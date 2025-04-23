@@ -2,7 +2,7 @@ import os
 import sys
 
 from ...finetune import ChromatinEndToEndDataset
-from ...profile import profile_model_resources, CaduceusModel
+from ...profile import CaduceusModel, profile_model_resources
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")

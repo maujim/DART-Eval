@@ -1,7 +1,7 @@
 import os
 
-from ...embeddings import SequenceBaselinePairedControlEmbeddingExtractor
 from ....components import PairedControlDataset
+from ...embeddings import SequenceBaselinePairedControlEmbeddingExtractor
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

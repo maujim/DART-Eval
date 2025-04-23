@@ -1,10 +1,15 @@
 import os
 import sys
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import torch
 
-from ...training import EmbeddingsDataset, CNNSequenceBaselineClassifier, evaluate_probing_classifier
+from ...training import (
+    CNNSequenceBaselineClassifier,
+    EmbeddingsDataset,
+    evaluate_probing_classifier,
+)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

@@ -1,7 +1,7 @@
 import os
 
-from ...embeddings import GenaLMEmbeddingExtractor
 from ....components import PairedControlDataset
+from ...embeddings import GenaLMEmbeddingExtractor
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -1,21 +1,22 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import polars as pl
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from scipy.spatial import distance
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 from transformers import (
-    AutoTokenizer,
-    AutoModelForMaskedLM,
+    AutoConfig,
     AutoModel,
     AutoModelForCausalLM,
+    AutoModelForMaskedLM,
+    AutoTokenizer,
     BertConfig,
-    AutoConfig,
 )
-from scipy.spatial import distance
-from tqdm import tqdm
+
 from ..utils import NoModule, onehot_to_chars
-import polars as pl
 
 
 class LikelihoodEvaluator(metaclass=ABCMeta):

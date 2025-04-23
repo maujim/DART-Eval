@@ -1,15 +1,15 @@
 import os
 import sys
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
 import torch
 
 from ....training import (
-    PeaksEmbeddingsDataset,
     CNNSequenceBaselinePredictor,
-    eval_peak_classifier,
     LargeCNNSlicedEmbeddingsPredictor,
+    PeaksEmbeddingsDataset,
+    eval_peak_classifier,
 )
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")

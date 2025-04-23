@@ -1,31 +1,31 @@
-import os
-from abc import ABCMeta, abstractmethod
 import hashlib
-import shutil
 import importlib
 import json
-import warnings
+import os
+import shutil
 import time
+import warnings
+from abc import ABCMeta, abstractmethod
 
+import h5py
 import numpy as np
+import polars as pl
+import pyBigWig
+import pyfaidx
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset, ConcatDataset
-from transformers import (
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
-    BertConfig,
-    AutoModel,
-)
+from sklearn.metrics import average_precision_score, matthews_corrcoef, roc_auc_score
+from torch.utils.data import ConcatDataset, DataLoader, Dataset
 from tqdm import tqdm
-import polars as pl
-import h5py
-import pyfaidx
-import pyBigWig
-from sklearn.metrics import roc_auc_score, average_precision_score, matthews_corrcoef
+from transformers import (
+    AutoModel,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    BertConfig,
+)
 
 from ..finetune import HFClassifierModel, LoRAModule
-from ..utils import onehot_to_chars, one_hot_encode, NoModule, log1mexp
+from ..utils import NoModule, log1mexp, one_hot_encode, onehot_to_chars
 
 
 def profile_model_resources(

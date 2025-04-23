@@ -1,7 +1,7 @@
 import os
 
-import numpy as np
 import h5py
+import numpy as np
 from torch.utils.data import DataLoader
 
 from .components import PairedControlDataset

@@ -1,6 +1,6 @@
-import sys
-import shutil
 import math
+import shutil
+import sys
 
 import numpy as np
 import torch

@@ -2,8 +2,8 @@ import os
 import sys
 
 from ...training import (
-    EmbeddingsDataset,
     CNNSequenceBaselineClassifier,
+    EmbeddingsDataset,
     train_classifier,
 )
 

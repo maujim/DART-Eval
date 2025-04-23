@@ -3,15 +3,14 @@ import hashlib
 import os
 
 import numpy as np
-import torch
-from torch.utils.data import Dataset, DataLoader
 import polars as pl
 import pyfaidx
+import torch
+from torch.utils.data import DataLoader, Dataset
 
 # from scipy.stats import wilcoxon
 # from tqdm import tqdm
-
-from ..utils import one_hot_encode, copy_if_not_exists
+from ..utils import copy_if_not_exists, one_hot_encode
 
 
 class PairedControlDataset(Dataset):

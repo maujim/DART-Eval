@@ -1,6 +1,6 @@
 import os
 
-from ..evaluators import PairedControlDataset, DNABERT2Evaluator
+from ..evaluators import DNABERT2Evaluator, PairedControlDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

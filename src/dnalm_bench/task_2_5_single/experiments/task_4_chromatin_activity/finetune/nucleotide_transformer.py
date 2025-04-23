@@ -3,8 +3,8 @@ import sys
 
 from ....finetune import (
     ChromatinEndToEndDataset,
-    train_finetuned_chromatin_model,
     NucleotideTransformerLoRAModel,
+    train_finetuned_chromatin_model,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

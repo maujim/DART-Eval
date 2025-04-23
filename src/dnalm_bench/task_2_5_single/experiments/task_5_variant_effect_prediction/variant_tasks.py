@@ -1,15 +1,20 @@
-import numpy as np
 import os
+
+import numpy as np
 from sklearn.metrics.pairwise import manhattan_distances
 
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
-import pandas as pd
-from sklearn.metrics import average_precision_score, precision_recall_curve, auc
-from sklearn.metrics import roc_auc_score, roc_curve
 import matplotlib.pyplot as plt
-from scipy.stats import mannwhitneyu
+import pandas as pd
 import seaborn as sns
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import mannwhitneyu, pearsonr, spearmanr
+from sklearn.metrics import (
+    auc,
+    average_precision_score,
+    precision_recall_curve,
+    roc_auc_score,
+    roc_curve,
+)
 
 os.environ["DART_WORK_DIR"] = "/oak/stanford/groups/akundaje/arpitas/dart-eval"
 work_dir = os.environ.get("DART_WORK_DIR", "")

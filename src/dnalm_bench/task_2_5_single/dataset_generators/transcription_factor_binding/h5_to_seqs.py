@@ -1,7 +1,7 @@
-import h5py
-import numpy as np
 import sys
 
+import h5py
+import numpy as np
 
 # This script is used with the footprinting task - it takes an embedding file with positives and controls, extracts 100 controls, converts them to DNA sequences, and saves that into a text file
 

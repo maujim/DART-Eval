@@ -2,9 +2,9 @@ import os
 import sys
 
 from ....finetune import (
+    NucleotideTransformerLoRAModel,
     PeaksEndToEndDataset,
     train_finetuned_peak_classifier,
-    NucleotideTransformerLoRAModel,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

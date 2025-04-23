@@ -1,11 +1,12 @@
 import os
 import sys
-import polars as pl
-import pandas as pd
-import numpy as np
 
-from ....evaluators import MistralProbingVariantEvaluator
+import numpy as np
+import pandas as pd
+import polars as pl
+
 from ....components import VariantDataset
+from ....evaluators import MistralProbingVariantEvaluator
 from ....training import CNNEmbeddingsPredictor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")

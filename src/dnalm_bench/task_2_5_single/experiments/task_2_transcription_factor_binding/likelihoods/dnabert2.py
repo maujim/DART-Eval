@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....evaluators import DNABERT2Evaluator
 from ....components import FootprintingDataset
+from ....evaluators import DNABERT2Evaluator
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -2,9 +2,9 @@ import os
 import sys
 
 from ....finetune import (
+    HyenaDNALoRAModel,
     PeaksEndToEndDataset,
     train_finetuned_peak_classifier,
-    HyenaDNALoRAModel,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

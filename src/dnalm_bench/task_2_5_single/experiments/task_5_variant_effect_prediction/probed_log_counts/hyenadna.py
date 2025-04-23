@@ -1,11 +1,12 @@
 import os
 import sys
-import polars as pl
-import pandas as pd
-import numpy as np
 
-from ....evaluators import HDProbingVariantEvaluator
+import numpy as np
+import pandas as pd
+import polars as pl
+
 from ....components import VariantDataset
+from ....evaluators import HDProbingVariantEvaluator
 from ....training import CNNSlicedEmbeddingsPredictor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")

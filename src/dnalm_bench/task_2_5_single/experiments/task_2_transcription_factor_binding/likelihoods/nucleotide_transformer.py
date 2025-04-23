@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....evaluators import NTEvaluator
 from ....components import FootprintingDataset
+from ....evaluators import NTEvaluator
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -1,7 +1,8 @@
 import json
+import sys
+
 import numpy as np
 from statsmodels.stats.proportion import proportion_confint
-import sys
 
 # Sample JSON file paths for each model (replace these paths with actual paths)
 

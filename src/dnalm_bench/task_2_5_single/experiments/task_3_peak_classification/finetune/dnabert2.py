@@ -2,9 +2,9 @@ import os
 import sys
 
 from ....finetune import (
+    DNABERT2LoRAModel,
     PeaksEndToEndDataset,
     train_finetuned_peak_classifier,
-    DNABERT2LoRAModel,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

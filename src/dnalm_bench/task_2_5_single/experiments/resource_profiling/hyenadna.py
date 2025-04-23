@@ -2,7 +2,7 @@ import os
 import sys
 
 from ...finetune import ChromatinEndToEndDataset
-from ...profile import profile_model_resources, HyenaDNAModel
+from ...profile import HyenaDNAModel, profile_model_resources
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")

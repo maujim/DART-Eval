@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
 from ....finetune import (
+    LargeCNNClassifier,
     PeaksEndToEndDataset,
     eval_finetuned_peak_classifier,
-    LargeCNNClassifier,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

@@ -1,7 +1,8 @@
-import pysam
-import pandas as pd
-import sys
 import os
+import sys
+
+import pandas as pd
+import pysam
 
 dart_work_dir = os.environ.get("DART_WORK_DIR", "")
 

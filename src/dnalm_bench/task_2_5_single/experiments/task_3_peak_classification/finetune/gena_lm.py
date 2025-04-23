@@ -2,9 +2,9 @@ import os
 import sys
 
 from ....finetune import (
+    GENALMLoRAModel,
     PeaksEndToEndDataset,
     train_finetuned_peak_classifier,
-    GENALMLoRAModel,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

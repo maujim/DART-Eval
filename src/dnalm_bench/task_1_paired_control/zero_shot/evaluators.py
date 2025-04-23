@@ -1,23 +1,23 @@
-from abc import ABCMeta, abstractmethod
-import os
 import json
+import os
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from scipy.stats import wilcoxon
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 from transformers import (
-    AutoTokenizer,
-    AutoModelForMaskedLM,
     AutoModel,
     AutoModelForCausalLM,
+    AutoModelForMaskedLM,
+    AutoTokenizer,
     BertConfig,
 )
-from scipy.stats import wilcoxon
-from tqdm import tqdm
 
+from ...utils import NoModule, onehot_to_chars
 from ..components import PairedControlDataset
-from ...utils import onehot_to_chars, NoModule
 
 
 class MaskedZeroShotScore(metaclass=ABCMeta):

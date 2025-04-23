@@ -1,7 +1,8 @@
-import pandas as pd
 import glob
-from collections import Counter
 import os
+from collections import Counter
+
+import pandas as pd
 
 dart_work_dir = os.environ.get("DART_WORK_DIR", "")
 

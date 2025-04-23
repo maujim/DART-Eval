@@ -1,6 +1,6 @@
 import os
 
-from ..evaluators import PairedControlDataset, GenaLMEvaluator
+from ..evaluators import GenaLMEvaluator, PairedControlDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

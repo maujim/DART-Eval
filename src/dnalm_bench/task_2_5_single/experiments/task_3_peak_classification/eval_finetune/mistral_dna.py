@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
 from ....finetune import (
+    MistralDNALoRAModel,
     PeaksEndToEndDataset,
     eval_finetuned_peak_classifier,
-    MistralDNALoRAModel,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

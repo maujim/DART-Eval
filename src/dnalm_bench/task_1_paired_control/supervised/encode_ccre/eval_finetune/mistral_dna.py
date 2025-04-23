@@ -1,12 +1,12 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
-from ....finetune import evaluate_finetuned_classifier, MistralDNALoRAModel
 from ....components import PairedControlDataset
+from ....finetune import MistralDNALoRAModel, evaluate_finetuned_classifier
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

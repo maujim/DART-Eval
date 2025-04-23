@@ -1,14 +1,15 @@
-import tensorflow as tf
-import tensorflow_probability as tfp
+import json
+import math
+
+import numpy as np
+import pandas as pd
 import pyBigWig
 import pyfaidx
+import tensorflow as tf
+import tensorflow_probability as tfp
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import average_precision_score, roc_auc_score
 from tensorflow import keras
-import math
-import json
-import pandas as pd
-import numpy as np
-from scipy.stats import spearmanr, pearsonr
-from sklearn.metrics import roc_auc_score, average_precision_score
 
 
 def mean_squared_error(true_vals, pred_vals):

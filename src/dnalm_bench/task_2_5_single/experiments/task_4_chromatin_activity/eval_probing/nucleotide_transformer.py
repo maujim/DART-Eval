@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
-import pandas as pd
 import numpy as np
+import pandas as pd
+import torch
 
 from ....training import (
     AssayEmbeddingsDataset,
-    evaluate_chromatin_model,
     CNNEmbeddingsPredictor,
+    evaluate_chromatin_model,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

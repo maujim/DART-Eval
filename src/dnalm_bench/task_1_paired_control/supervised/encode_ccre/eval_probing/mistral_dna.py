@@ -1,13 +1,13 @@
 import os
 import sys
 
-import torch
-import pandas as pd
 import numpy as np
+import pandas as pd
+import torch
 
 from ...training import (
-    EmbeddingsDataset,
     CNNEmbeddingsClassifier,
+    EmbeddingsDataset,
     evaluate_probing_classifier,
 )
 

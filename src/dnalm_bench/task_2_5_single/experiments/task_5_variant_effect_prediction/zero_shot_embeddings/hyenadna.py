@@ -1,10 +1,11 @@
 import os
 import sys
+
 import numpy as np
 import polars as pl
 
-from ....evaluators import HDVariantEmbeddingEvaluator
 from ....components import VariantDataset
+from ....evaluators import HDVariantEmbeddingEvaluator
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
 from ....finetune import (
+    NucleotideTransformerLoRAModel,
     PeaksEndToEndDataset,
     eval_finetuned_peak_classifier,
-    NucleotideTransformerLoRAModel,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

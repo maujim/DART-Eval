@@ -1,10 +1,11 @@
 import os
 import sys
-from sklearn.cluster import *
-from sklearn.metrics import *
-from sklearn.decomposition import *
-from umap import UMAP
+
 import numpy as np
+from sklearn.cluster import *
+from sklearn.decomposition import *
+from sklearn.metrics import *
+from umap import UMAP
 
 np.random.seed(0)
 from .....embedding_clustering import (

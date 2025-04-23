@@ -1,6 +1,6 @@
 import os
 
-from ..evaluators import PairedControlDataset, CaduceusEvaluator
+from ..evaluators import CaduceusEvaluator, PairedControlDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

@@ -1,7 +1,7 @@
 import os
 
-from ...embeddings import NucleotideTransformerEmbeddingExtractor
 from ....components import PairedControlDataset
+from ...embeddings import NucleotideTransformerEmbeddingExtractor
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

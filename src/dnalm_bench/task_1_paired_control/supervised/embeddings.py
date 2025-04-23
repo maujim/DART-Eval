@@ -1,24 +1,24 @@
 import os
 from abc import ABCMeta, abstractmethod
 
+import h5py
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from scipy.stats import wilcoxon
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 from transformers import (
-    AutoTokenizer,
-    AutoModelForMaskedLM,
     AutoModel,
     AutoModelForCausalLM,
+    AutoModelForMaskedLM,
+    AutoTokenizer,
     BertConfig,
 )
-from scipy.stats import wilcoxon
-from tqdm import tqdm
-import h5py
 
-from ..components import PairedControlDataset
-from ...utils import onehot_to_chars
 from ...embeddings import HFEmbeddingExtractor, SequenceBaselineEmbeddingExtractor
+from ...utils import onehot_to_chars
+from ..components import PairedControlDataset
 
 
 class PairedControlEmbeddingExtractor:

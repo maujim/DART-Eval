@@ -1,6 +1,6 @@
 import os
 
-from ..evaluators import PairedControlDataset, MistralEvaluator
+from ..evaluators import MistralEvaluator, PairedControlDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

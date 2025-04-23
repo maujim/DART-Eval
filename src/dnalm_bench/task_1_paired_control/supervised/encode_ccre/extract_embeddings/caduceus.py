@@ -1,7 +1,7 @@
 import os
 
-from ...embeddings import CaduceusEmbeddingExtractor
 from ....components import PairedControlDataset
+from ...embeddings import CaduceusEmbeddingExtractor
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

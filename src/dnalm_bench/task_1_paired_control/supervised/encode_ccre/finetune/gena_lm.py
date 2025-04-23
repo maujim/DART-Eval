@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....finetune import train_finetuned_classifier, GENALMLoRAModel
 from ....components import PairedControlDataset
+from ....finetune import GENALMLoRAModel, train_finetuned_classifier
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

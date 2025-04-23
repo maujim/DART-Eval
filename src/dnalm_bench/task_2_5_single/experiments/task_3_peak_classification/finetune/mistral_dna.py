@@ -2,9 +2,9 @@ import os
 import sys
 
 from ....finetune import (
+    MistralDNALoRAModel,
     PeaksEndToEndDataset,
     train_finetuned_peak_classifier,
-    MistralDNALoRAModel,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

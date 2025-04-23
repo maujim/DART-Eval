@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....embeddings import HyenaDNAEmbeddingExtractor
 from ....components import FootprintingDataset
+from ....embeddings import HyenaDNAEmbeddingExtractor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

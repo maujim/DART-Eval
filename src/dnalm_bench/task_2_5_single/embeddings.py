@@ -1,23 +1,24 @@
 import os
 from abc import ABCMeta, abstractmethod
 
+import h5py
 import numpy as np
 import torch
 import torch.nn.functional as F
+from scipy.stats import wilcoxon
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 from transformers import (
-    AutoTokenizer,
-    AutoModelForMaskedLM,
+    AutoConfig,
     AutoModel,
     AutoModelForCausalLM,
+    AutoModelForMaskedLM,
+    AutoTokenizer,
     BertConfig,
-    AutoConfig,
 )
-from scipy.stats import wilcoxon
-from tqdm import tqdm
-import h5py
+
 from ..embeddings import HFEmbeddingExtractor, SequenceBaselineEmbeddingExtractor
-from ..utils import onehot_to_chars, NoModule
+from ..utils import NoModule, onehot_to_chars
 
 
 class SimpleEmbeddingExtractor:

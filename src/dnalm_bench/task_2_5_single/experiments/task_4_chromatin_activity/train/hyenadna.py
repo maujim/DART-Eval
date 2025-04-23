@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 
 from ....training import (
     AssayEmbeddingsDataset,
-    InterleavedIterableDataset,
     CNNSlicedEmbeddingsPredictor,
+    InterleavedIterableDataset,
     train_predictor,
 )
 

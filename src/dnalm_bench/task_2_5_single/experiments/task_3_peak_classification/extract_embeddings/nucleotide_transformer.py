@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....embeddings import NucleotideTransformerEmbeddingExtractor
 from ....components import SimpleSequence
+from ....embeddings import NucleotideTransformerEmbeddingExtractor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

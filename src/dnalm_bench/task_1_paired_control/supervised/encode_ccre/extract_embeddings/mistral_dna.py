@@ -1,7 +1,7 @@
 import os
 
-from ...embeddings import MistralDNAEmbeddingExtractor
 from ....components import PairedControlDataset
+from ...embeddings import MistralDNAEmbeddingExtractor
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

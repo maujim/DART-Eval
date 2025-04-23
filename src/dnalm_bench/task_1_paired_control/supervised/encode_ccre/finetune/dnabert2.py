@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....finetune import train_finetuned_classifier, DNABERT2LoRAModel
 from ....components import PairedControlDataset
+from ....finetune import DNABERT2LoRAModel, train_finetuned_classifier
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

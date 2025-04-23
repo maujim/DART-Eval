@@ -1,12 +1,12 @@
 import os
 
-import numpy as np
 import h5py
+import numpy as np
+import pandas as pd
 from torch.utils.data import DataLoader
 
-from ...finetune import ChromatinEndToEndDataset
 from ...components import VariantDataset
-import pandas as pd
+from ...finetune import ChromatinEndToEndDataset
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

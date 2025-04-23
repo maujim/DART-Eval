@@ -2,9 +2,9 @@ import os
 import sys
 
 from ....finetune import (
+    CaduceusLoRAModel,
     PeaksEndToEndDataset,
     train_finetuned_peak_classifier,
-    CaduceusLoRAModel,
 )
 
 work_dir = os.environ.get("DART_WORK_DIR", "")

@@ -1,20 +1,20 @@
-import os
-import math
-import heapq
 import hashlib
-import warnings
+import heapq
 import json
+import math
+import os
+import warnings
 
+import h5py
 import numpy as np
+import polars as pl
+import pyBigWig
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader, IterableDataset, get_worker_info
-import polars as pl
-import pyBigWig
-import h5py
 from ncls import NCLS
-from sklearn.metrics import roc_auc_score, average_precision_score, matthews_corrcoef
+from sklearn.metrics import average_precision_score, matthews_corrcoef, roc_auc_score
+from torch.utils.data import DataLoader, Dataset, IterableDataset, get_worker_info
 from tqdm import tqdm
 
 from ..utils import copy_if_not_exists, log1mexp

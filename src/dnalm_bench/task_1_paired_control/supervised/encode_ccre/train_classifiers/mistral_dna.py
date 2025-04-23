@@ -3,7 +3,7 @@ import sys
 
 from torch.utils.data import DataLoader
 
-from ...training import EmbeddingsDataset, CNNEmbeddingsClassifier, train_classifier
+from ...training import CNNEmbeddingsClassifier, EmbeddingsDataset, train_classifier
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
+import torch
 
 from ....finetune import (
     ChromatinEndToEndDataset,
-    evaluate_finetuned_chromatin_model,
     DNABERT2LoRAModel,
+    evaluate_finetuned_chromatin_model,
 )
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

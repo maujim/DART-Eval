@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
 import argparse
-import pyfaidx
 import random
+
+import numpy as np
+import pandas as pd
+import pyfaidx
 
 np.random.seed(0)
 random.seed(0)

@@ -1,8 +1,8 @@
 import os
 import sys
 
-from ....finetune import train_finetuned_classifier, HyenaDNALoRAModel
 from ....components import PairedControlDataset
+from ....finetune import HyenaDNALoRAModel, train_finetuned_classifier
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")

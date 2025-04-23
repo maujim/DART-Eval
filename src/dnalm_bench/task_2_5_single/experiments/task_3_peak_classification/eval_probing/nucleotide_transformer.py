@@ -1,14 +1,14 @@
 import os
 import sys
 
-import torch
-import pandas as pd
 import numpy as np
+import pandas as pd
+import torch
 
 from ....training import (
-    PeaksEmbeddingsDataset,
     CNNEmbeddingsPredictor,
     LargeCNNEmbeddingsPredictor,
+    PeaksEmbeddingsDataset,
     eval_peak_classifier,
 )
 

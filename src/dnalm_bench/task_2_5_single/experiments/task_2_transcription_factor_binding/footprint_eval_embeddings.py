@@ -1,10 +1,11 @@
+import argparse
+import os
+
 import h5py
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cosine
 from scipy.stats import wilcoxon
-import argparse
-import os
 
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 

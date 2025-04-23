@@ -1,12 +1,13 @@
 import os
 import sys
 
-from ....evaluators import GenaLMProbingVariantEvaluator
-from ....components import VariantDataset
-from ....training import CNNEmbeddingsPredictor
-import polars as pl
-import pandas as pd
 import numpy as np
+import pandas as pd
+import polars as pl
+
+from ....components import VariantDataset
+from ....evaluators import GenaLMProbingVariantEvaluator
+from ....training import CNNEmbeddingsPredictor
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")
 

@@ -4,8 +4,8 @@ import sys
 from torch.utils.data import DataLoader
 
 from ...training import (
-    EmbeddingsDataset,
     CNNSlicedEmbeddingsClassifier,
+    EmbeddingsDataset,
     train_classifier,
 )
 

@@ -1,6 +1,6 @@
 import os
 
-from ..evaluators import PairedControlDataset, HDEvaluator
+from ..evaluators import HDEvaluator, PairedControlDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
