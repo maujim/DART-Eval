@@ -8,20 +8,19 @@ work_dir = os.environ.get("DART_WORK_DIR", "")
 
 if __name__ == "__main__":
     model_name = "hyenadna-large-1m-seqlen-hf"
-    
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
-    elements_tsv = os.path.join(work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv")
 
-    out_dir = os.path.join(work_dir, f"task_1_ccre/zero_shot_outputs/likelihoods/{model_name}")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
+    elements_tsv = os.path.join(
+        work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
+    )
 
-    chroms = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    out_dir = os.path.join(
+        work_dir, f"task_1_ccre/zero_shot_outputs/likelihoods/{model_name}"
+    )
+
+    chroms = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     batch_size = 4096
     num_workers = 4

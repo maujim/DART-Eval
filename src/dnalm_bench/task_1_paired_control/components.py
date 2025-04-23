@@ -7,10 +7,12 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import polars as pl
 import pyfaidx
+
 # from scipy.stats import wilcoxon
 # from tqdm import tqdm
 
 from ..utils import one_hot_encode, copy_if_not_exists
+
 
 class PairedControlDataset(Dataset):
     _elements_dtypes = {
@@ -21,7 +23,7 @@ class PairedControlDataset(Dataset):
         "ccre_end": pl.UInt32,
         "ccre_relative_start": pl.Int32,
         "ccre_relative_end": pl.Int32,
-        "reverse_complement": pl.Boolean
+        "reverse_complement": pl.Boolean,
     }
 
     _seq_tokens = np.array([0, 1, 2, 3], dtype=np.int8)
@@ -40,7 +42,7 @@ class PairedControlDataset(Dataset):
 
             fa_path_abs = os.path.abspath(genome_fa)
             fa_idx_path_abs = fa_path_abs + ".fai"
-            fa_path_hash = hashlib.sha256(fa_path_abs.encode('utf-8')).hexdigest()
+            fa_path_hash = hashlib.sha256(fa_path_abs.encode("utf-8")).hexdigest()
             fa_cache_path = os.path.join(cache_dir, fa_path_hash + ".fa")
             fa_idx_cache_path = fa_cache_path + ".fai"
             copy_if_not_exists(genome_fa, fa_cache_path)
@@ -51,13 +53,15 @@ class PairedControlDataset(Dataset):
                 pass
 
         self.genome_fa = genome_fa
-        fa = pyfaidx.Fasta(self.genome_fa) # Build index if needed
+        fa = pyfaidx.Fasta(self.genome_fa)  # Build index if needed
         fa.close()
 
     @classmethod
     def _load_elements(cls, elements_file, chroms):
-        df = pl.scan_csv(elements_file, separator="\t", quote_char=None, dtypes=cls._elements_dtypes).with_row_index()
-        
+        df = pl.scan_csv(
+            elements_file, separator="\t", quote_char=None, dtypes=cls._elements_dtypes
+        ).with_row_index()
+
         if chroms is not None:
             df = df.filter(pl.col("chr").is_in(chroms))
 
@@ -70,7 +74,9 @@ class PairedControlDataset(Dataset):
         """
         Adapted from https://github.com/kundajelab/deeplift/blob/0201a218965a263b9dd353099feacbb6f6db0051/deeplift/dinuc_shuffle.py#L43
         """
-        tokens = (seq * cls._seq_tokens[None,:]).sum(axis=1) # Convert one-hot to integer tokens
+        tokens = (seq * cls._seq_tokens[None, :]).sum(
+            axis=1
+        )  # Convert one-hot to integer tokens
 
         # For each token, get a list of indices of all the tokens that come after it
         shuf_next_inds = []
@@ -86,7 +92,7 @@ class PairedControlDataset(Dataset):
             shuf_next_inds[t] = shuf_next_inds[t][inds]
 
         counters = [0, 0, 0, 0]
-    
+
         # Build the resulting array
         ind = 0
         result = np.empty_like(tokens)
@@ -97,19 +103,23 @@ class PairedControlDataset(Dataset):
             counters[t] += 1
             result[j] = tokens[ind]
 
-        shuffled = (result[:,None] == cls._seq_tokens[None,:]).astype(np.int8) # Convert tokens back to one-hot
+        shuffled = (result[:, None] == cls._seq_tokens[None, :]).astype(
+            np.int8
+        )  # Convert tokens back to one-hot
 
         return shuffled
-    
+
     def __len__(self):
         return self.elements_df.height
-    
-    def __getitem__(self, idx):
-        idx_orig, chrom, start, end, elem_start, elem_end, _, _, rc = self.elements_df.row(idx)
 
-        item_bytes = (self.seed, chrom, elem_start, elem_end).__repr__().encode('utf-8')
+    def __getitem__(self, idx):
+        idx_orig, chrom, start, end, elem_start, elem_end, _, _, rc = (
+            self.elements_df.row(idx)
+        )
+
+        item_bytes = (self.seed, chrom, elem_start, elem_end).__repr__().encode("utf-8")
         item_seed = int(hashlib.sha256(item_bytes).hexdigest(), 16) % self._seed_upper
-        
+
         rng = np.random.default_rng(item_seed)
 
         # Extract the sequence
@@ -118,7 +128,7 @@ class PairedControlDataset(Dataset):
 
         fa = pyfaidx.Fasta(self.genome_fa, one_based_attributes=False)
 
-        sequence_data = fa[chrom][max(0, start):end]
+        sequence_data = fa[chrom][max(0, start) : end]
         sequence = sequence_data.seq.upper()
         start_adj = sequence_data.start
         end_adj = sequence_data.end
@@ -127,19 +137,19 @@ class PairedControlDataset(Dataset):
 
         a = start_adj - start
         b = end_adj - start
-        seq[a:b,:] = one_hot_encode(sequence)
+        seq[a:b, :] = one_hot_encode(sequence)
 
         # Generate shuffled control
         e_a = max(elem_start - start, a)
         e_b = min(elem_end - start, b)
-        elem = seq[e_a:e_b,:]
+        elem = seq[e_a:e_b, :]
         shuf = self._dinuc_shuffle(elem, rng)
         ctrl = seq.copy()
-        ctrl[e_a:e_b,:] = shuf
-        
+        ctrl[e_a:e_b, :] = shuf
+
         # Reverse complement augment
         if rc:
-            seq = seq[::-1,::-1].copy()
-            ctrl = ctrl[::-1,::-1].copy()
+            seq = seq[::-1, ::-1].copy()
+            ctrl = ctrl[::-1, ::-1].copy()
 
         return torch.from_numpy(seq), torch.from_numpy(ctrl), torch.tensor(idx_orig)

@@ -12,7 +12,9 @@ if __name__ == "__main__":
 
     model_name = "DNABERT-2-117M"
     embeddings_h5 = os.path.join(work_dir, f"task_1_ccre/embeddings/{model_name}.h5")
-    elements_tsv = os.path.join(work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv")
+    elements_tsv = os.path.join(
+        work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
+    )
 
     batch_size = 2048
     num_workers = 0
@@ -36,22 +38,12 @@ if __name__ == "__main__":
         "chr17",
         "chr19",
         "chrX",
-        "chrY"
-    ]
-    
-    chroms_val = [
-        "chr6",
-        "chr21"
+        "chrY",
     ]
 
-    chroms_test = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    chroms_val = ["chr6", "chr21"]
+
+    chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     input_channels = 768
     hidden_channels = 32
@@ -61,14 +53,32 @@ if __name__ == "__main__":
 
     num_epochs = 150
 
-    out_dir = os.path.join(work_dir, f"task_1_ccre/supervised_models/probed/{model_name}/")
+    out_dir = os.path.join(
+        work_dir, f"task_1_ccre/supervised_models/probed/{model_name}/"
+    )
     os.makedirs(out_dir, exist_ok=True)
 
     cache_dir = None
 
-    train_dataset = EmbeddingsDataset(embeddings_h5, elements_tsv, chroms_train, cache_dir=cache_dir)
-    val_dataset = EmbeddingsDataset(embeddings_h5, elements_tsv, chroms_val, cache_dir=cache_dir)
+    train_dataset = EmbeddingsDataset(
+        embeddings_h5, elements_tsv, chroms_train, cache_dir=cache_dir
+    )
+    val_dataset = EmbeddingsDataset(
+        embeddings_h5, elements_tsv, chroms_val, cache_dir=cache_dir
+    )
     model = CNNEmbeddingsClassifier(input_channels, hidden_channels, kernel_size)
 
-    train_classifier(train_dataset, val_dataset, model, num_epochs, out_dir, batch_size, lr, num_workers, prefetch_factor, device, 
-                     progress_bar=True, resume_from=resume_checkpoint)
+    train_classifier(
+        train_dataset,
+        val_dataset,
+        model,
+        num_epochs,
+        out_dir,
+        batch_size,
+        lr,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+        resume_from=resume_checkpoint,
+    )

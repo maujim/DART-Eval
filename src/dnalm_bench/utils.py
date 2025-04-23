@@ -5,20 +5,21 @@ import math
 import numpy as np
 import torch
 
-ALPHABET = np.array(["A","C","G","T"], dtype="S1")
+ALPHABET = np.array(["A", "C", "G", "T"], dtype="S1")
+
 
 def onehot_to_chars(onehot):
-	chararray = ALPHABET[np.argmax(onehot, axis=2)]
-	strings = [b"".join(row).decode() for row in chararray]
+    chararray = ALPHABET[np.argmax(onehot, axis=2)]
+    strings = [b"".join(row).decode() for row in chararray]
 
-	return strings
+    return strings
 
 
 def one_hot_encode(sequence):
     sequence = sequence.upper()
 
-    seq_chararray = np.frombuffer(sequence.encode('UTF-8'), dtype='S1')
-    one_hot = (seq_chararray[:,None] == ALPHABET[None,:]).astype(np.int8)
+    seq_chararray = np.frombuffer(sequence.encode("UTF-8"), dtype="S1")
+    one_hot = (seq_chararray[:, None] == ALPHABET[None, :]).astype(np.int8)
 
     return one_hot
 
@@ -52,11 +53,14 @@ class NoModule:
 
 SEQ_TOKENS = np.array([0, 1, 2, 3], dtype=np.int8)
 
+
 def dinucleotide_shuffle(seq, rng):
     """
     Adapted from https://github.com/kundajelab/deeplift/blob/0201a218965a263b9dd353099feacbb6f6db0051/deeplift/dinuc_shuffle.py#L43
     """
-    tokens = (seq * SEQ_TOKENS[None,:]).sum(axis=1) # Convert one-hot to integer tokens
+    tokens = (seq * SEQ_TOKENS[None, :]).sum(
+        axis=1
+    )  # Convert one-hot to integer tokens
 
     # For each token, get a list of indices of all the tokens that come after it
     shuf_next_inds = []
@@ -83,9 +87,12 @@ def dinucleotide_shuffle(seq, rng):
         counters[t] += 1
         result[j] = tokens[ind]
 
-    shuffled = (result[:,None] == SEQ_TOKENS[None,:]).astype(np.int8) # Convert tokens back to one-hot
+    shuffled = (result[:, None] == SEQ_TOKENS[None, :]).astype(
+        np.int8
+    )  # Convert tokens back to one-hot
 
     return shuffled
+
 
 def log1mexp(x):
     """

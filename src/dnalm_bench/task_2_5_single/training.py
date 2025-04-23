@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 from ..utils import copy_if_not_exists, log1mexp
 
+
 class AssayEmbeddingsDataset(IterableDataset):
     _elements_dtypes = {
         "chr": pl.Utf8,
@@ -27,10 +28,20 @@ class AssayEmbeddingsDataset(IterableDataset):
         "elem_start": pl.UInt32,
         "elem_end": pl.UInt32,
         "elem_relative_start": pl.UInt32,
-        "elem_relative_end": pl.UInt32
+        "elem_relative_end": pl.UInt32,
     }
 
-    def __init__(self, embeddings_h5, elements_tsv, chroms, assay_bw, bounds=None, crop=0, downsample_ratio=1, cache_dir=None):
+    def __init__(
+        self,
+        embeddings_h5,
+        elements_tsv,
+        chroms,
+        assay_bw,
+        bounds=None,
+        crop=0,
+        downsample_ratio=1,
+        cache_dir=None,
+    ):
         super().__init__()
 
         self.elements_df_all = self._load_elements(elements_tsv, chroms)
@@ -44,13 +55,17 @@ class AssayEmbeddingsDataset(IterableDataset):
             os.makedirs(cache_dir, exist_ok=True)
 
             embeddings_h5_abs = os.path.abspath(embeddings_h5)
-            embeddings_h5_hash = hashlib.sha256(embeddings_h5_abs.encode('utf-8')).hexdigest()
-            embeddings_h5_cache_path = os.path.join(cache_dir, embeddings_h5_hash + ".h5")
+            embeddings_h5_hash = hashlib.sha256(
+                embeddings_h5_abs.encode("utf-8")
+            ).hexdigest()
+            embeddings_h5_cache_path = os.path.join(
+                cache_dir, embeddings_h5_hash + ".h5"
+            )
             copy_if_not_exists(embeddings_h5, embeddings_h5_cache_path)
             self.embeddings_h5 = embeddings_h5_cache_path
 
             bw_path_abs = os.path.abspath(assay_bw)
-            bw_path_hash = hashlib.sha256(bw_path_abs.encode('utf-8')).hexdigest()
+            bw_path_hash = hashlib.sha256(bw_path_abs.encode("utf-8")).hexdigest()
             bw_cache_path = os.path.join(cache_dir, bw_path_hash + ".bw")
             copy_if_not_exists(assay_bw, bw_cache_path)
             self.assay_bw = bw_cache_path
@@ -60,11 +75,10 @@ class AssayEmbeddingsDataset(IterableDataset):
 
     @classmethod
     def _load_elements(cls, elements_file, chroms):
-        df = (
-            pl.scan_csv(elements_file, separator="\t", quote_char=None, dtypes=cls._elements_dtypes)
-            .with_row_count(name="region_idx")
-        )
-        
+        df = pl.scan_csv(
+            elements_file, separator="\t", quote_char=None, dtypes=cls._elements_dtypes
+        ).with_row_count(name="region_idx")
+
         if chroms is not None:
             df = df.filter(pl.col("chr").is_in(chroms))
 
@@ -75,7 +89,11 @@ class AssayEmbeddingsDataset(IterableDataset):
     def _set_epoch(self):
         segment = self.next_epoch % self.downsample_ratio
         total_elements = self.elements_df_all.height
-        segment_boundaries = np.linspace(0, total_elements, self.downsample_ratio + 1).round().astype(np.int32)
+        segment_boundaries = (
+            np.linspace(0, total_elements, self.downsample_ratio + 1)
+            .round()
+            .astype(np.int32)
+        )
         start = segment_boundaries[segment]
         end = segment_boundaries[segment + 1]
 
@@ -98,7 +116,7 @@ class AssayEmbeddingsDataset(IterableDataset):
             end = min(start + per_worker, len(self))
 
         df_sub = self.elements_df.slice(start, end - start)
-        valid_inds = df_sub.get_column('region_idx').to_numpy().astype(np.int32)
+        valid_inds = df_sub.get_column("region_idx").to_numpy().astype(np.int32)
         region_idx_to_row = {v: i for i, v in enumerate(valid_inds)}
         query_struct = NCLS(valid_inds, valid_inds + 1, valid_inds)
 
@@ -139,13 +157,19 @@ class AssayEmbeddingsDataset(IterableDataset):
 
                     seq_emb = seq_chunk[i_rel]
 
-                    _, chrom, region_start, region_end, _, _, _, _ = self.elements_df.row(region_idx_to_row[i])
+                    _, chrom, region_start, region_end, _, _, _, _ = (
+                        self.elements_df.row(region_idx_to_row[i])
+                    )
 
-                    track = np.nan_to_num(bw.values(chrom, region_start, region_end, numpy=True))
+                    track = np.nan_to_num(
+                        bw.values(chrom, region_start, region_end, numpy=True)
+                    )
                     if self.crop > 0:
-                        track = track[self.crop:-self.crop]
+                        track = track[self.crop : -self.crop]
 
-                    yield torch.from_numpy(seq_emb), torch.from_numpy(seq_inds), torch.from_numpy(track)
+                    yield torch.from_numpy(seq_emb), torch.from_numpy(
+                        seq_inds
+                    ), torch.from_numpy(track)
 
         bw.close()
         self._set_epoch()
@@ -179,7 +203,7 @@ class InterleavedIterableDataset(IterableDataset):
                 lengths.append(end - start)
 
         iterators = [iter(dataset) for dataset in self.datasets]
-        heap = [(0., 0, l, i) for i, l in enumerate(lengths) if l > 0]
+        heap = [(0.0, 0, l, i) for i, l in enumerate(lengths) if l > 0]
         heapq.heapify(heap)
         while heap:
             frac, complete, length, ind = heapq.heappop(heap)
@@ -201,7 +225,9 @@ class PeaksEmbeddingsDataset(IterableDataset):
         "label": pl.Utf8,
     }
 
-    def __init__(self, embeddings_h5, elements_tsv, chroms, classes, bounds=None, cache_dir=None):
+    def __init__(
+        self, embeddings_h5, elements_tsv, chroms, classes, bounds=None, cache_dir=None
+    ):
         super().__init__()
 
         self.classes = classes
@@ -213,18 +239,21 @@ class PeaksEmbeddingsDataset(IterableDataset):
             os.makedirs(cache_dir, exist_ok=True)
 
             embeddings_h5_abs = os.path.abspath(embeddings_h5)
-            embeddings_h5_hash = hashlib.sha256(embeddings_h5_abs.encode('utf-8')).hexdigest()
-            embeddings_h5_cache_path = os.path.join(cache_dir, embeddings_h5_hash + ".h5")
+            embeddings_h5_hash = hashlib.sha256(
+                embeddings_h5_abs.encode("utf-8")
+            ).hexdigest()
+            embeddings_h5_cache_path = os.path.join(
+                cache_dir, embeddings_h5_hash + ".h5"
+            )
             copy_if_not_exists(embeddings_h5, embeddings_h5_cache_path)
             self.embeddings_h5 = embeddings_h5_cache_path
 
     @classmethod
     def _load_elements(cls, elements_file, chroms):
-        df = (
-            pl.scan_csv(elements_file, separator="\t", quote_char=None, dtypes=cls._elements_dtypes)
-            .with_row_count(name="region_idx")
-        )
-        
+        df = pl.scan_csv(
+            elements_file, separator="\t", quote_char=None, dtypes=cls._elements_dtypes
+        ).with_row_count(name="region_idx")
+
         if chroms is not None:
             df = df.filter(pl.col("chr").is_in(chroms))
 
@@ -248,7 +277,7 @@ class PeaksEmbeddingsDataset(IterableDataset):
             end = min(start + per_worker, len(self))
 
         df_sub = self.elements_df.slice(start, end - start)
-        valid_inds = df_sub.get_column('region_idx').to_numpy().astype(np.int32)
+        valid_inds = df_sub.get_column("region_idx").to_numpy().astype(np.int32)
         region_idx_to_row = {v: i for i, v in enumerate(valid_inds)}
         query_struct = NCLS(valid_inds, valid_inds + 1, valid_inds)
 
@@ -287,14 +316,18 @@ class PeaksEmbeddingsDataset(IterableDataset):
 
                     seq_emb = seq_chunk[i_rel]
 
-                    _, chrom, start, end, _, _, _, label = self.elements_df.row(region_idx_to_row[i])
+                    _, chrom, start, end, _, _, _, label = self.elements_df.row(
+                        region_idx_to_row[i]
+                    )
                     label_ind = self.classes[label]
 
-                    yield torch.from_numpy(seq_emb), torch.from_numpy(seq_inds), torch.tensor(label_ind)
+                    yield torch.from_numpy(seq_emb), torch.from_numpy(
+                        seq_inds
+                    ), torch.tensor(label_ind)
 
 
 def log1pMSELoss(log_predicted_counts, true_counts):
-    log_true = torch.log(true_counts+1)
+    log_true = torch.log(true_counts + 1)
     return torch.mean(torch.square(log_true - log_predicted_counts), dim=-1)
 
 
@@ -302,14 +335,15 @@ def pearson_correlation(a, b):
     a = a - torch.mean(a)
     b = b - torch.mean(b)
 
-    var_a = torch.sum(a ** 2)
-    var_b = torch.sum(b ** 2)
+    var_a = torch.sum(a**2)
+    var_b = torch.sum(b**2)
     cov = torch.sum(a * b)
 
     r = cov / torch.sqrt(var_a * var_b)
     r = torch.nan_to_num(r)
 
     return r.item()
+
 
 def counts_pearson(log_preds, targets):
     log_targets = torch.log(targets + 1)
@@ -334,24 +368,58 @@ def _collate_batch(batch):
     max_seq_len = max(seq_emb.shape[0] for seq_emb, _, _, _ in batch)
     seq_embs = torch.zeros(len(batch), max_seq_len, batch[0][0].shape[1])
     for i, (seq_emb, _, _, _) in enumerate(batch):
-        seq_embs[i,:seq_emb.shape[0]] = seq_emb
+        seq_embs[i, : seq_emb.shape[0]] = seq_emb
 
     seq_inds = torch.stack([seq_inds for _, seq_inds, _, _ in batch])
     tracks = torch.stack([track for _, _, track, _ in batch])
     indicators = torch.stack([indicator for _, _, _, indicator in batch])
 
     return seq_embs, seq_inds, tracks, indicators
-    
 
-def train_predictor(train_dataset, val_dataset, model, num_epochs, out_dir, batch_size, lr, num_workers, prefetch_factor, device, progress_bar=False, resume_from=None):
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=_collate_batch, 
-                                  pin_memory=True, prefetch_factor=prefetch_factor, persistent_workers=False)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=_collate_batch, 
-                                pin_memory=True, prefetch_factor=prefetch_factor, persistent_workers=False)
+
+def train_predictor(
+    train_dataset,
+    val_dataset,
+    model,
+    num_epochs,
+    out_dir,
+    batch_size,
+    lr,
+    num_workers,
+    prefetch_factor,
+    device,
+    progress_bar=False,
+    resume_from=None,
+):
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        collate_fn=_collate_batch,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=False,
+    )
+    val_dataloader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        collate_fn=_collate_batch,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=False,
+    )
 
     os.makedirs(out_dir, exist_ok=True)
     log_file = os.path.join(out_dir, "train.log")
-    log_cols = ["epoch", "val_loss", "val_pearson_all", "val_spearman_all", "val_pearson_peaks", "val_spearman_peaks"]
+    log_cols = [
+        "epoch",
+        "val_loss",
+        "val_pearson_all",
+        "val_spearman_all",
+        "val_pearson_peaks",
+        "val_spearman_peaks",
+    ]
 
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -366,7 +434,9 @@ def train_predictor(train_dataset, val_dataset, model, num_epochs, out_dir, batc
             optimizer_resume = torch.load(optimizer_checkpoint_path)
             optimizer.load_state_dict(optimizer_resume)
         except FileNotFoundError:
-            warnings.warn(f"Optimizer checkpoint not found at {optimizer_checkpoint_path}")
+            warnings.warn(
+                f"Optimizer checkpoint not found at {optimizer_checkpoint_path}"
+            )
     else:
         start_epoch = 0
 
@@ -377,30 +447,34 @@ def train_predictor(train_dataset, val_dataset, model, num_epochs, out_dir, batc
 
         for epoch in range(start_epoch, num_epochs):
             model.train()
-            for i, (seq_emb, seq_inds, track, indicator) in enumerate(tqdm(train_dataloader, disable=(not progress_bar), desc="train")):
+            for i, (seq_emb, seq_inds, track, indicator) in enumerate(
+                tqdm(train_dataloader, disable=(not progress_bar), desc="train")
+            ):
                 seq_emb = seq_emb.to(device)
                 seq_inds = seq_inds.to(device)
                 track = track.to(device)
                 true_counts = track.sum(dim=1)
-                
+
                 optimizer.zero_grad()
                 log1p_counts = model(seq_emb, seq_inds)
                 loss = log1pMSELoss(log1p_counts, true_counts)
                 loss.backward()
                 optimizer.step()
-            
+
             val_loss = 0
             val_counts_pred = []
             val_counts_true = []
             val_indicators = []
             model.eval()
             with torch.no_grad():
-                for i, (seq_emb, seq_inds, track, indicator) in enumerate(tqdm(val_dataloader, disable=(not progress_bar), desc="val")):
+                for i, (seq_emb, seq_inds, track, indicator) in enumerate(
+                    tqdm(val_dataloader, disable=(not progress_bar), desc="val")
+                ):
                     seq_emb = seq_emb.to(device)
                     seq_inds = seq_inds.to(device)
                     track = track.to(device)
                     true_counts = track.sum(dim=1)
-                    
+
                     optimizer.zero_grad()
                     log1p_counts = model(seq_emb, seq_inds)
                     loss = log1pMSELoss(log1p_counts, true_counts)
@@ -419,23 +493,42 @@ def train_predictor(train_dataset, val_dataset, model, num_epochs, out_dir, batc
             val_counts_true_peaks = val_counts_true[val_indicators == 0]
 
             val_pearson_all = counts_pearson(val_counts_pred, val_counts_true)
-            val_pearson_peaks = counts_pearson(val_counts_pred_peaks, val_counts_true_peaks)
+            val_pearson_peaks = counts_pearson(
+                val_counts_pred_peaks, val_counts_true_peaks
+            )
             val_spearman_all = counts_spearman(val_counts_pred, val_counts_true)
-            val_spearman_peaks = counts_spearman(val_counts_pred_peaks, val_counts_true_peaks)
+            val_spearman_peaks = counts_spearman(
+                val_counts_pred_peaks, val_counts_true_peaks
+            )
 
-            print(f"Epoch {epoch}: val_loss={val_loss}, val_pearson_all={val_pearson_all}, val_spearman_all={val_spearman_all}, val_pearson_peaks={val_pearson_peaks}, val_spearman_peaks={val_spearman_peaks}")
-            f.write(f"{epoch}\t{val_loss}\t{val_pearson_all}\t{val_spearman_all}\t{val_pearson_peaks}\t{val_spearman_peaks}\n")
+            print(
+                f"Epoch {epoch}: val_loss={val_loss}, val_pearson_all={val_pearson_all}, val_spearman_all={val_spearman_all}, val_pearson_peaks={val_pearson_peaks}, val_spearman_peaks={val_spearman_peaks}"
+            )
+            f.write(
+                f"{epoch}\t{val_loss}\t{val_pearson_all}\t{val_spearman_all}\t{val_pearson_peaks}\t{val_spearman_peaks}\n"
+            )
             f.flush()
 
             checkpoint_path = os.path.join(out_dir, f"checkpoint_{epoch}.pt")
             torch.save(model.state_dict(), checkpoint_path)
 
 
-def evaluate_chromatin_model(pos_dataset, idr_dataset, neg_dataset, model, batch_size, out_path,
-                                       num_workers, prefetch_factor, device, progress_bar=False, seed=0):
+def evaluate_chromatin_model(
+    pos_dataset,
+    idr_dataset,
+    neg_dataset,
+    model,
+    batch_size,
+    out_path,
+    num_workers,
+    prefetch_factor,
+    device,
+    progress_bar=False,
+    seed=0,
+):
 
     torch.manual_seed(seed)
-    
+
     model.to(device)
 
     model.eval()
@@ -444,14 +537,27 @@ def evaluate_chromatin_model(pos_dataset, idr_dataset, neg_dataset, model, batch
         test_loss_pos = 0
         test_counts_pred_pos = []
         test_counts_true_pos = []
-        test_pos_dataloader = DataLoader(pos_dataset, batch_size=batch_size, num_workers=num_workers,
-                                         pin_memory=True, prefetch_factor=prefetch_factor, collate_fn=_collate_batch_classifier)
-        for i, (seq_emb, seq_inds, track) in enumerate(tqdm(test_pos_dataloader, disable=(not progress_bar), desc="test_pos", ncols=120)):
+        test_pos_dataloader = DataLoader(
+            pos_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=True,
+            prefetch_factor=prefetch_factor,
+            collate_fn=_collate_batch_classifier,
+        )
+        for i, (seq_emb, seq_inds, track) in enumerate(
+            tqdm(
+                test_pos_dataloader,
+                disable=(not progress_bar),
+                desc="test_pos",
+                ncols=120,
+            )
+        ):
             seq_emb = seq_emb.to(device)
             seq_inds = seq_inds.to(device)
             track = track.to(device)
             true_counts = track.sum(dim=1)
-            
+
             log1p_counts = model(seq_emb, seq_inds)
             loss = log1pMSELoss(log1p_counts, true_counts)
 
@@ -468,14 +574,27 @@ def evaluate_chromatin_model(pos_dataset, idr_dataset, neg_dataset, model, batch
         test_loss_idr = 0
         test_counts_pred_idr = []
         test_counts_true_idr = []
-        test_idr_dataloader = DataLoader(idr_dataset, batch_size=batch_size, num_workers=num_workers,
-                                            pin_memory=True, prefetch_factor=prefetch_factor, collate_fn=_collate_batch_classifier)
-        for i, (seq_emb, seq_inds, track) in enumerate(tqdm(test_idr_dataloader, disable=(not progress_bar), desc="test_idr", ncols=120)):
+        test_idr_dataloader = DataLoader(
+            idr_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=True,
+            prefetch_factor=prefetch_factor,
+            collate_fn=_collate_batch_classifier,
+        )
+        for i, (seq_emb, seq_inds, track) in enumerate(
+            tqdm(
+                test_idr_dataloader,
+                disable=(not progress_bar),
+                desc="test_idr",
+                ncols=120,
+            )
+        ):
             seq_emb = seq_emb.to(device)
             seq_inds = seq_inds.to(device)
             track = track.to(device)
             true_counts = track.sum(dim=1)
-            
+
             log1p_counts = model(seq_emb, seq_inds)
             loss = log1pMSELoss(log1p_counts, true_counts)
 
@@ -492,15 +611,28 @@ def evaluate_chromatin_model(pos_dataset, idr_dataset, neg_dataset, model, batch
         test_loss_neg = 0
         test_counts_pred_neg = []
         test_counts_true_neg = []
-        test_neg_dataloader = DataLoader(neg_dataset, batch_size=batch_size, num_workers=num_workers,
-                                            pin_memory=True, prefetch_factor=prefetch_factor, collate_fn=_collate_batch_classifier)
-        for i, (seq_emb, seq_inds, track) in enumerate(tqdm(test_neg_dataloader, disable=(not progress_bar), desc="test_neg", ncols=120)):
+        test_neg_dataloader = DataLoader(
+            neg_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=True,
+            prefetch_factor=prefetch_factor,
+            collate_fn=_collate_batch_classifier,
+        )
+        for i, (seq_emb, seq_inds, track) in enumerate(
+            tqdm(
+                test_neg_dataloader,
+                disable=(not progress_bar),
+                desc="test_neg",
+                ncols=120,
+            )
+        ):
             seq_emb = seq_emb.to(device)
             seq_inds = seq_inds.to(device)
             track = track.to(device)
             true_counts = track.sum(dim=1)
-            
-            log1p_counts = model(seq_emb, seq_inds)#.squeeze(1)  
+
+            log1p_counts = model(seq_emb, seq_inds)  # .squeeze(1)
             loss = log1pMSELoss(log1p_counts, true_counts)
 
             test_loss_neg += loss.item()
@@ -514,15 +646,31 @@ def evaluate_chromatin_model(pos_dataset, idr_dataset, neg_dataset, model, batch
         test_loss_neg /= len(test_neg_dataloader)
 
         test_loss_all = (test_loss_pos + test_loss_neg) / 2
-        test_counts_pred_all = torch.cat([test_counts_pred_pos, test_counts_pred_neg], dim=0)
-        test_counts_true_all = torch.cat([test_counts_true_pos, test_counts_true_neg], dim=0)
+        test_counts_pred_all = torch.cat(
+            [test_counts_pred_pos, test_counts_pred_neg], dim=0
+        )
+        test_counts_true_all = torch.cat(
+            [test_counts_true_pos, test_counts_true_neg], dim=0
+        )
         test_pearson_all = counts_pearson(test_counts_pred_all, test_counts_true_all)
         test_spearman_all = counts_spearman(test_counts_pred_all, test_counts_true_all)
 
-        test_counts_pred_cls = torch.cat([test_counts_pred_idr, test_counts_pred_neg], dim=0)
-        test_labels = torch.cat([torch.ones_like(test_counts_pred_idr), torch.zeros_like(test_counts_pred_neg)], dim=0)
-        test_auroc = roc_auc_score(test_labels.numpy(force=True), test_counts_pred_cls.numpy(force=True))
-        test_auprc = average_precision_score(test_labels.numpy(force=True), test_counts_pred_cls.numpy(force=True))
+        test_counts_pred_cls = torch.cat(
+            [test_counts_pred_idr, test_counts_pred_neg], dim=0
+        )
+        test_labels = torch.cat(
+            [
+                torch.ones_like(test_counts_pred_idr),
+                torch.zeros_like(test_counts_pred_neg),
+            ],
+            dim=0,
+        )
+        test_auroc = roc_auc_score(
+            test_labels.numpy(force=True), test_counts_pred_cls.numpy(force=True)
+        )
+        test_auprc = average_precision_score(
+            test_labels.numpy(force=True), test_counts_pred_cls.numpy(force=True)
+        )
 
         metrics = {
             "test_loss_pos": test_loss_pos,
@@ -551,22 +699,57 @@ def _collate_batch_classifier(batch):
     max_seq_len = max(seq_emb.shape[0] for seq_emb, _, _ in batch)
     seq_embs = torch.zeros(len(batch), max_seq_len, batch[0][0].shape[1])
     for i, (seq_emb, _, _) in enumerate(batch):
-        seq_embs[i,:seq_emb.shape[0]] = seq_emb
+        seq_embs[i, : seq_emb.shape[0]] = seq_emb
 
     seq_inds = torch.stack([seq_inds for _, seq_inds, _ in batch])
     labels = torch.stack([label for _, _, label in batch])
 
     return seq_embs, seq_inds, labels
 
-def train_peak_classifier(train_dataset, val_dataset, model, num_epochs, out_dir, batch_size, lr, num_workers, prefetch_factor, device, progress_bar=False, resume_from=None):
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=_collate_batch_classifier, 
-                                  pin_memory=True, prefetch_factor=prefetch_factor, persistent_workers=False)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=_collate_batch_classifier, 
-                                pin_memory=True, prefetch_factor=prefetch_factor, persistent_workers=False)
+
+def train_peak_classifier(
+    train_dataset,
+    val_dataset,
+    model,
+    num_epochs,
+    out_dir,
+    batch_size,
+    lr,
+    num_workers,
+    prefetch_factor,
+    device,
+    progress_bar=False,
+    resume_from=None,
+):
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        collate_fn=_collate_batch_classifier,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=False,
+    )
+    val_dataloader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        collate_fn=_collate_batch_classifier,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=False,
+    )
 
     os.makedirs(out_dir, exist_ok=True)
     log_file = os.path.join(out_dir, "train.log")
-    log_cols = ["epoch", "val_loss", "val_pearson_all", "val_spearman_all", "val_pearson_peaks", "val_spearman_peaks"]
+    log_cols = [
+        "epoch",
+        "val_loss",
+        "val_pearson_all",
+        "val_spearman_all",
+        "val_pearson_peaks",
+        "val_spearman_peaks",
+    ]
 
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -581,7 +764,9 @@ def train_peak_classifier(train_dataset, val_dataset, model, num_epochs, out_dir
             optimizer_resume = torch.load(optimizer_checkpoint_path)
             optimizer.load_state_dict(optimizer_resume)
         except FileNotFoundError:
-            warnings.warn(f"Optimizer checkpoint not found at {optimizer_checkpoint_path}")
+            warnings.warn(
+                f"Optimizer checkpoint not found at {optimizer_checkpoint_path}"
+            )
     else:
         start_epoch = 0
 
@@ -594,9 +779,16 @@ def train_peak_classifier(train_dataset, val_dataset, model, num_epochs, out_dir
 
         for epoch in range(start_epoch, num_epochs):
             model.train()
-            
+
             optimizer.zero_grad()
-            for i, (seq_emb, seq_inds, labels) in enumerate(tqdm(train_dataloader, disable=(not progress_bar), desc="train", ncols=120)):
+            for i, (seq_emb, seq_inds, labels) in enumerate(
+                tqdm(
+                    train_dataloader,
+                    disable=(not progress_bar),
+                    desc="train",
+                    ncols=120,
+                )
+            ):
                 seq_emb = seq_emb.to(device)
                 seq_inds = seq_inds.to(device)
                 labels = labels.to(device)
@@ -606,16 +798,23 @@ def train_peak_classifier(train_dataset, val_dataset, model, num_epochs, out_dir
                 loss = criterion(pred, labels)
                 loss.backward()
                 optimizer.step()
-            
+
             val_loss = 0
             val_acc = 0
             model.eval()
             with torch.no_grad():
-                for i, (seq_emb, seq_inds, labels) in enumerate(tqdm(val_dataloader, disable=(not progress_bar), desc="val", ncols=120)):
+                for i, (seq_emb, seq_inds, labels) in enumerate(
+                    tqdm(
+                        val_dataloader,
+                        disable=(not progress_bar),
+                        desc="val",
+                        ncols=120,
+                    )
+                ):
                     seq_emb = seq_emb.to(device)
                     seq_inds = seq_inds.to(device)
                     labels = labels.to(device)
-                    
+
                     pred = model(seq_emb, seq_inds)
                     loss = criterion(pred, labels)
 
@@ -635,26 +834,43 @@ def train_peak_classifier(train_dataset, val_dataset, model, num_epochs, out_dir
             torch.save(optimizer.state_dict(), optimizer_checkpoint_path)
 
 
-def eval_peak_classifier(test_dataset, model, out_path, batch_size, 
-                                    num_workers, prefetch_factor, device, progress_bar=False, seed=0):
+def eval_peak_classifier(
+    test_dataset,
+    model,
+    out_path,
+    batch_size,
+    num_workers,
+    prefetch_factor,
+    device,
+    progress_bar=False,
+    seed=0,
+):
 
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers, 
-                                pin_memory=True, prefetch_factor=prefetch_factor, persistent_workers=False,
-                                collate_fn=_collate_batch_classifier)
+    test_dataloader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=False,
+        collate_fn=_collate_batch_classifier,
+    )
 
     torch.manual_seed(seed)
 
     model.to(device)
 
     criterion = torch.nn.CrossEntropyLoss()
-            
+
     test_loss = 0
     pred_log_probs = []
     labels = []
     model.eval()
     pred_logits = []
     with torch.no_grad():
-        for i, (seq_emb, seq_inds, labels_batch) in enumerate(tqdm(test_dataloader, disable=(not progress_bar), desc="test", ncols=120)):
+        for i, (seq_emb, seq_inds, labels_batch) in enumerate(
+            tqdm(test_dataloader, disable=(not progress_bar), desc="test", ncols=120)
+        ):
             seq_emb = seq_emb.to(device)
             seq_inds = seq_inds.to(device)
             labels_batch = labels_batch.to(device)
@@ -673,7 +889,9 @@ def eval_peak_classifier(test_dataset, model, out_path, batch_size,
     log_probs_others = torch.nan_to_num(log_probs_others, neginf=-999)
     pred_log_odds = pred_log_probs - log_probs_others
     labels = torch.cat(labels, dim=0)
-    test_acc = (pred_log_probs.argmax(dim=1) == labels).sum().item() / len(test_dataloader.dataset)
+    test_acc = (pred_log_probs.argmax(dim=1) == labels).sum().item() / len(
+        test_dataloader.dataset
+    )
 
     pred_labels = pred_log_probs.argmax(dim=1)
 
@@ -709,8 +927,12 @@ class CNNEmbeddingsPredictorBase(torch.nn.Module):
         super().__init__()
 
         self.conv1 = torch.nn.Conv1d(input_channels, hidden_channels, 1, padding=1)
-        self.conv2 = torch.nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding=1)
-        self.conv3 = torch.nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding=1)
+        self.conv2 = torch.nn.Conv1d(
+            hidden_channels, hidden_channels, kernel_size, padding=1
+        )
+        self.conv3 = torch.nn.Conv1d(
+            hidden_channels, hidden_channels, kernel_size, padding=1
+        )
         self.fc1 = torch.nn.Linear(hidden_channels, out_channels)
 
     @staticmethod
@@ -728,95 +950,129 @@ class CNNEmbeddingsPredictorBase(torch.nn.Module):
         x = self.fc1(x)
         x = x.squeeze(-1)
         return x
-    
+
+
 class CNNEmbeddingsPredictor(CNNEmbeddingsPredictorBase):
     @staticmethod
     def _detokenize(embs, inds):
-        gather_idx = inds[:,:,None].expand(-1,-1,embs.shape[2]).to(embs.device)
+        gather_idx = inds[:, :, None].expand(-1, -1, embs.shape[2]).to(embs.device)
         seq_embeddings = torch.gather(embs, 1, gather_idx)
 
         return seq_embeddings
+
 
 class CNNSlicedEmbeddingsPredictor(CNNEmbeddingsPredictorBase):
     @staticmethod
     def _detokenize(embs, inds):
         positions = torch.arange(embs.shape[1], device=embs.device)
-        start_mask = positions[None,:] >= inds[:,0][:,None]
-        end_mask = positions[None,:] < inds[:,1][:,None]
+        start_mask = positions[None, :] >= inds[:, 0][:, None]
+        end_mask = positions[None, :] < inds[:, 1][:, None]
         mask = start_mask & end_mask
         seq_embeddings = embs[mask].reshape(embs.shape[0], -1, embs.shape[2])
 
         return seq_embeddings
-    
+
+
 class LargeCNNPredictorBase(torch.nn.Module):
-    def __init__(self, input_channels, n_filters, n_residual_convs, output_channels, first_kernel_size=21, residual_kernel_size=3):
+    def __init__(
+        self,
+        input_channels,
+        n_filters,
+        n_residual_convs,
+        output_channels,
+        first_kernel_size=21,
+        residual_kernel_size=3,
+    ):
         super().__init__()
         self.n_residual_convs = n_residual_convs
-        self.iconv = torch.nn.Conv1d(input_channels, n_filters, kernel_size=first_kernel_size)
+        self.iconv = torch.nn.Conv1d(
+            input_channels, n_filters, kernel_size=first_kernel_size
+        )
         self.irelu = torch.nn.ReLU()
 
-        self.rconvs = torch.nn.ModuleList([
-            torch.nn.Conv1d(n_filters, n_filters, kernel_size=residual_kernel_size, 
-                dilation=2**i) for i in range(n_residual_convs)
-        ])
-        self.rrelus = torch.nn.ModuleList([
-            torch.nn.ReLU() for i in range(n_residual_convs)
-        ])
+        self.rconvs = torch.nn.ModuleList(
+            [
+                torch.nn.Conv1d(
+                    n_filters,
+                    n_filters,
+                    kernel_size=residual_kernel_size,
+                    dilation=2**i,
+                )
+                for i in range(n_residual_convs)
+            ]
+        )
+        self.rrelus = torch.nn.ModuleList(
+            [torch.nn.ReLU() for i in range(n_residual_convs)]
+        )
         self.output_layer = torch.nn.Linear(n_filters, output_channels)
+
     @staticmethod
     def _detokenize(embs, inds):
         return embs
-        
+
     def forward(self, embs, inds):
         torch.cuda.synchronize()
         x = self._detokenize(embs, inds)
         x = x.swapaxes(1, 2)
-        
+
         x = self.irelu(self.iconv(x))
-        
+
         for i in range(self.n_residual_convs):
             x_conv = self.rrelus[i](self.rconvs[i](x))
             crop_amount = (x.shape[-1] - x_conv.shape[-1]) // 2
-            x_cropped = x[:,:,crop_amount:-crop_amount]
+            x_cropped = x[:, :, crop_amount:-crop_amount]
             x = torch.add(x_cropped, x_conv)
-            
+
         x = torch.mean(x, dim=-1)
-        
+
         final_out = self.output_layer(x)
-        
+
         return final_out
 
 
 class LargeCNNEmbeddingsPredictor(LargeCNNPredictorBase):
     @staticmethod
     def _detokenize(embs, inds):
-        gather_idx = inds[:,:,None].expand(-1,-1,embs.shape[2]).to(embs.device)
+        gather_idx = inds[:, :, None].expand(-1, -1, embs.shape[2]).to(embs.device)
         seq_embeddings = torch.gather(embs, 1, gather_idx)
 
         return seq_embeddings
+
 
 class LargeCNNSlicedEmbeddingsPredictor(LargeCNNPredictorBase):
     @staticmethod
     def _detokenize(embs, inds):
         positions = torch.arange(embs.shape[1], device=embs.device)
-        start_mask = positions[None,:] >= inds[:,0][:,None]
-        end_mask = positions[None,:] < inds[:,1][:,None]
+        start_mask = positions[None, :] >= inds[:, 0][:, None]
+        end_mask = positions[None, :] < inds[:, 1][:, None]
         mask = start_mask & end_mask
         seq_embeddings = embs[mask].reshape(embs.shape[0], -1, embs.shape[2])
 
         return seq_embeddings
 
 
-
 class CNNSequenceBaselinePredictor(torch.nn.Module):
-    def __init__(self, emb_channels, hidden_channels, kernel_size, seq_len, init_kernel_size, pos_channels, out_channels=1):
+    def __init__(
+        self,
+        emb_channels,
+        hidden_channels,
+        kernel_size,
+        seq_len,
+        init_kernel_size,
+        pos_channels,
+        out_channels=1,
+    ):
         super().__init__()
 
-        self.iconv = torch.nn.Conv1d(4, emb_channels, kernel_size=init_kernel_size, padding='same')
+        self.iconv = torch.nn.Conv1d(
+            4, emb_channels, kernel_size=init_kernel_size, padding="same"
+        )
         self.pos_emb = torch.nn.Parameter(torch.zeros(seq_len, pos_channels))
         self.pos_proj = torch.nn.Linear(pos_channels, emb_channels)
-        
-        self.trunk = CNNEmbeddingsPredictorBase(emb_channels, hidden_channels, kernel_size, out_channels=out_channels)
+
+        self.trunk = CNNEmbeddingsPredictorBase(
+            emb_channels, hidden_channels, kernel_size, out_channels=out_channels
+        )
 
     def forward(self, x, _):
         x = x.swapaxes(1, 2)
@@ -828,17 +1084,32 @@ class CNNSequenceBaselinePredictor(torch.nn.Module):
         x = self.trunk(x, None)
 
         return x
-    
+
 
 class LargeCNNSequenceBaselinePredictor(torch.nn.Module):
-    def __init__(self, emb_channels, hidden_channels, kernel_size, seq_len, init_kernel_size, pos_channels, n_filters_trunk, n_residual_trunk, out_channels=1):
+    def __init__(
+        self,
+        emb_channels,
+        hidden_channels,
+        kernel_size,
+        seq_len,
+        init_kernel_size,
+        pos_channels,
+        n_filters_trunk,
+        n_residual_trunk,
+        out_channels=1,
+    ):
         super().__init__()
 
-        self.iconv = torch.nn.Conv1d(4, emb_channels, kernel_size=init_kernel_size, padding='same')
+        self.iconv = torch.nn.Conv1d(
+            4, emb_channels, kernel_size=init_kernel_size, padding="same"
+        )
         self.pos_emb = torch.nn.Parameter(torch.zeros(seq_len, pos_channels))
         self.pos_proj = torch.nn.Linear(pos_channels, emb_channels)
-        
-        self.trunk = LargeCNNPredictorBase(emb_channels, n_filters_trunk, n_residual_trunk, out_channels)
+
+        self.trunk = LargeCNNPredictorBase(
+            emb_channels, n_filters_trunk, n_residual_trunk, out_channels
+        )
 
     def forward(self, x, _):
         x = x.swapaxes(1, 2)
@@ -850,4 +1121,3 @@ class LargeCNNSequenceBaselinePredictor(torch.nn.Module):
         x = self.trunk(x, None)
 
         return x
-

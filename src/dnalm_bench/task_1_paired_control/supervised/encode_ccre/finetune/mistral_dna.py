@@ -14,8 +14,12 @@ if __name__ == "__main__":
 
     model_name = "Mistral-DNA-v1-1.6B-hg38"
 
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
-    elements_tsv = os.path.join(work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
+    elements_tsv = os.path.join(
+        work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
+    )
 
     batch_size = 128
     num_workers = 4
@@ -39,22 +43,12 @@ if __name__ == "__main__":
         "chr17",
         "chr19",
         "chrX",
-        "chrY"
-    ]
-    
-    chroms_val = [
-        "chr6",
-        "chr21"
+        "chrY",
     ]
 
-    chroms_test = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    chroms_val = ["chr6", "chr21"]
+
+    chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     emb_channels = 768
 
@@ -63,18 +57,33 @@ if __name__ == "__main__":
     lora_dropout = 0.05
 
     accumulate = 1
-    
+
     lr = 1e-4
     wd = 0.01
     num_epochs = 25
 
-    out_dir = os.path.join(work_dir, f"task_1_ccre/supervised_models/fine_tuned/{model_name}")
+    out_dir = os.path.join(
+        work_dir, f"task_1_ccre/supervised_models/fine_tuned/{model_name}"
+    )
     os.makedirs(out_dir, exist_ok=True)
 
     train_dataset = PairedControlDataset(genome_fa, elements_tsv, chroms_train, seed)
     val_dataset = PairedControlDataset(genome_fa, elements_tsv, chroms_val, seed)
 
     model = MistralDNALoRAModel(model_name, lora_rank, lora_alpha, lora_dropout, 2)
-    train_finetuned_classifier(train_dataset, val_dataset, model, num_epochs, out_dir, 
-                               batch_size, lr, wd, accumulate, num_workers, prefetch_factor, 
-                               device, progress_bar=True, resume_from=resume_checkpoint)
+    train_finetuned_classifier(
+        train_dataset,
+        val_dataset,
+        model,
+        num_epochs,
+        out_dir,
+        batch_size,
+        lr,
+        wd,
+        accumulate,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+        resume_from=resume_checkpoint,
+    )

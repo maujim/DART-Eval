@@ -12,12 +12,23 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 if __name__ == "__main__":
     model_name = "DNABERT-2-117M"
 
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
-    
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
+
     cell_line = "GM12878"
-    peaks_tsv = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_peaks.bed")
-    nonpeaks_tsv = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_nonpeaks.bed")
-    assay_bw = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/bigwigs/{cell_line}_unstranded.bw")
+    peaks_tsv = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_peaks.bed",
+    )
+    nonpeaks_tsv = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_nonpeaks.bed",
+    )
+    assay_bw = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/bigwigs/{cell_line}_unstranded.bw",
+    )
 
     batch_size = 16
     num_workers = 4
@@ -33,12 +44,23 @@ if __name__ == "__main__":
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"{model_name}.json")
 
-    dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, peaks_tsv, None, crop, cache_dir=cache_dir)
+    dataset = ChromatinEndToEndDataset(
+        genome_fa, assay_bw, peaks_tsv, None, crop, cache_dir=cache_dir
+    )
 
     model = DNABERT2Model(model_name, 1)
 
-    metrics = profile_model_resources(dataset, model, batch_size, num_batches_warmup, 
-                                      out_path, num_workers, prefetch_factor, device, progress_bar=True)
-    
+    metrics = profile_model_resources(
+        dataset,
+        model,
+        batch_size,
+        num_batches_warmup,
+        out_path,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+    )
+
     for k, v in metrics.items():
         print(f"{k}: {v}")

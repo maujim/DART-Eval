@@ -18,8 +18,8 @@ if __name__ == "__main__":
     num_workers = 0
     seed = 0
     device = "cuda"
-    chroms=None
-    
+    chroms = None
+
     variants_bed = sys.argv[1]
     output_prefix = sys.argv[2]
     genome_fa = sys.argv[3]
@@ -31,17 +31,25 @@ if __name__ == "__main__":
     lora_alpha = 2 * lora_rank
     lora_dropout = 0.05
 
-    model_folder = os.path.join(root_output_dir, f"task_4_chromatin_activity/supervised_models/fine_tuned/{model_name}/{cell_line}")
+    model_folder = os.path.join(
+        root_output_dir,
+        f"task_4_chromatin_activity/supervised_models/fine_tuned/{model_name}/{cell_line}",
+    )
     train_log = f"{model_folder}/train.log"
     df = pd.read_csv(train_log, sep="\t")
     checkpoint_num = int(df["epoch"][np.argmin(df["val_loss"])])
     model_path = os.path.join(model_folder, f"checkpoint_{checkpoint_num}.pt")
 
-    out_dir = os.path.join(root_output_dir, f"task_5_variant_effect_prediction/outputs/fine_tuned/{model_name}")
+    out_dir = os.path.join(
+        root_output_dir,
+        f"task_5_variant_effect_prediction/outputs/fine_tuned/{model_name}",
+    )
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"{output_prefix}.tsv")
 
-    model = NucleotideTransformerLoRAModel(model_name, lora_rank, lora_alpha, lora_dropout, 1)
+    model = NucleotideTransformerLoRAModel(
+        model_name, lora_rank, lora_alpha, lora_dropout, 1
+    )
     checkpoint_resume = torch.load(model_path)
     model.load_state_dict(checkpoint_resume, strict=False)
     dataset = VariantDataset(genome_fa, variants_bed, chroms, seed)

@@ -1,7 +1,11 @@
 import os
 import sys
 
-from ....finetune import PeaksEndToEndDataset, train_finetuned_peak_classifier, CaduceusLoRAModel
+from ....finetune import (
+    PeaksEndToEndDataset,
+    train_finetuned_peak_classifier,
+    CaduceusLoRAModel,
+)
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")
@@ -11,8 +15,13 @@ if __name__ == "__main__":
 
     model_name = "caduceus-ps_seqlen-131k_d_model-256_n_layer-16"
 
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
-    elements_tsv = os.path.join(work_dir,"task_3_peak_classification/processed_inputs/peaks_by_cell_label_unique_dataloader_format.tsv")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
+    elements_tsv = os.path.join(
+        work_dir,
+        "task_3_peak_classification/processed_inputs/peaks_by_cell_label_unique_dataloader_format.tsv",
+    )
 
     batch_size = 64
     num_workers = 4
@@ -36,22 +45,12 @@ if __name__ == "__main__":
         "chr17",
         "chr19",
         "chrX",
-        "chrY"
-    ]
-    
-    chroms_val = [
-        "chr6",
-        "chr21"
+        "chrY",
     ]
 
-    chroms_test = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    chroms_val = ["chr6", "chr21"]
+
+    chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     emb_channels = 256
 
@@ -60,28 +59,44 @@ if __name__ == "__main__":
     lora_dropout = 0.05
 
     accumulate = 2
-    
+
     lr = 1e-4
     wd = 0.01
     num_epochs = 40
 
-    out_dir = os.path.join(work_dir, f"task_3_peak_classification/supervised_models/fine_tuned/{model_name}")    
+    out_dir = os.path.join(
+        work_dir,
+        f"task_3_peak_classification/supervised_models/fine_tuned/{model_name}",
+    )
 
     os.makedirs(out_dir, exist_ok=True)
-    
-    classes = {
-        "GM12878": 0,
-        "H1ESC": 1,
-        "HEPG2": 2,
-        "IMR90": 3,
-        "K562": 4
-    } 
 
-    train_dataset = PeaksEndToEndDataset(genome_fa, elements_tsv, chroms_train, classes, cache_dir=cache_dir)
-    val_dataset = PeaksEndToEndDataset(genome_fa, elements_tsv, chroms_val, classes, cache_dir=cache_dir)
+    classes = {"GM12878": 0, "H1ESC": 1, "HEPG2": 2, "IMR90": 3, "K562": 4}
 
-    model = CaduceusLoRAModel(model_name, lora_rank, lora_alpha, lora_dropout, len(classes))
+    train_dataset = PeaksEndToEndDataset(
+        genome_fa, elements_tsv, chroms_train, classes, cache_dir=cache_dir
+    )
+    val_dataset = PeaksEndToEndDataset(
+        genome_fa, elements_tsv, chroms_val, classes, cache_dir=cache_dir
+    )
 
-    train_finetuned_peak_classifier(train_dataset, val_dataset, model, 
-                                    num_epochs, out_dir, batch_size, lr, wd, accumulate,
-                                    num_workers, prefetch_factor, device, progress_bar=True, resume_from=resume_checkpoint)
+    model = CaduceusLoRAModel(
+        model_name, lora_rank, lora_alpha, lora_dropout, len(classes)
+    )
+
+    train_finetuned_peak_classifier(
+        train_dataset,
+        val_dataset,
+        model,
+        num_epochs,
+        out_dir,
+        batch_size,
+        lr,
+        wd,
+        accumulate,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+        resume_from=resume_checkpoint,
+    )

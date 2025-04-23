@@ -11,7 +11,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, ConcatDataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, BertConfig, AutoModel
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    BertConfig,
+    AutoModel,
+)
 from tqdm import tqdm
 import polars as pl
 import h5py
@@ -23,20 +28,39 @@ from ..finetune import HFClassifierModel, LoRAModule
 from ..utils import onehot_to_chars, one_hot_encode, NoModule, log1mexp
 
 
-
-def profile_model_resources(dataset, model, batch_size, num_batches_warmup, out_path, num_workers, prefetch_factor, device, progress_bar=False, seed=0, num_batches_record=np.inf):
+def profile_model_resources(
+    dataset,
+    model,
+    batch_size,
+    num_batches_warmup,
+    out_path,
+    num_workers,
+    prefetch_factor,
+    device,
+    progress_bar=False,
+    seed=0,
+    num_batches_record=np.inf,
+):
     num_batches_total = num_batches_warmup + num_batches_record
-    
+
     num_params = sum(p.numel() for p in model.parameters())
-    
+
     model.to(device)
-    dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers,
-                            pin_memory=True, prefetch_factor=prefetch_factor, drop_last=True)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        drop_last=True,
+    )
 
     model.train()
     bwd_mem = []
     bwd_time = []
-    for i, (seq, track) in enumerate(tqdm(dataloader, disable=(not progress_bar), desc="bwd", ncols=120)):
+    for i, (seq, track) in enumerate(
+        tqdm(dataloader, disable=(not progress_bar), desc="bwd", ncols=120)
+    ):
         if i >= num_batches_total:
             break
 
@@ -60,13 +84,15 @@ def profile_model_resources(dataset, model, batch_size, num_batches_warmup, out_
     bwd_mem_std = np.std(bwd_mem)
     bwd_time_mean = np.mean(bwd_time)
     bwd_time_std = np.std(bwd_time)
-    
+
     model.eval()
     with torch.no_grad():
         fwd_mem = []
         fwd_time = []
-        
-        for i, (seq, track) in enumerate(tqdm(dataloader, disable=(not progress_bar), desc="fwd", ncols=120)):
+
+        for i, (seq, track) in enumerate(
+            tqdm(dataloader, disable=(not progress_bar), desc="fwd", ncols=120)
+        ):
             if i >= num_batches_total:
                 break
 
@@ -98,9 +124,9 @@ def profile_model_resources(dataset, model, batch_size, num_batches_warmup, out_
         "bwd_mem_mean": bwd_mem_mean,
         "bwd_mem_std": bwd_mem_std,
         "bwd_time_mean": bwd_time_mean,
-        "bwd_time_std": bwd_time_std
+        "bwd_time_std": bwd_time_std,
     }
-        
+
     with open(out_path, "w") as f:
         json.dump(metrics, f, indent=4)
 
@@ -111,10 +137,14 @@ class DNABERT2Model(HFClassifierModel):
     def __init__(self, model_name, num_labels):
         model_name = f"zhihan1996/{model_name}"
         with NoModule("triton"):
-            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name, trust_remote_code=True
+            )
             config = BertConfig.from_pretrained(model_name)
             config.num_labels = num_labels
-            model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, config=config)
+            model = AutoModelForSequenceClassification.from_pretrained(
+                model_name, trust_remote_code=True, config=config
+            )
 
         super().__init__(tokenizer, model)
 
@@ -123,9 +153,11 @@ class MistralDNAModel(HFClassifierModel):
     def __init__(self, model_name, num_labels):
         model_name = f"RaphaelMourad/{model_name}"
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
         model.config.pad_token_id = tokenizer.pad_token_id
-        
+
         super().__init__(tokenizer, model)
 
 
@@ -135,7 +167,9 @@ class GENALMModel(HFClassifierModel):
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
         model_base = AutoModel.from_pretrained(model_name, trust_remote_code=True)
         gena_module_name = model_base.__class__.__module__
-        cls = getattr(importlib.import_module(gena_module_name), 'BertForSequenceClassification')
+        cls = getattr(
+            importlib.import_module(gena_module_name), "BertForSequenceClassification"
+        )
         model = cls.from_pretrained(model_name, num_labels=num_labels)
 
         super().__init__(tokenizer, model)
@@ -145,7 +179,9 @@ class NucleotideTransformerModel(HFClassifierModel):
     def __init__(self, model_name, num_labels):
         model_name = f"InstaDeepAI/{model_name}"
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
 
         super().__init__(tokenizer, model)
 
@@ -160,8 +196,12 @@ class NucleotideTransformerModel(HFClassifierModel):
 class HyenaDNAModel(HFClassifierModel):
     def __init__(self, model_name, num_labels):
         model_name = f"LongSafari/{model_name}"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, padding_side="right")
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=True, padding_side="right"
+        )
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
 
         super().__init__(tokenizer, model)
 
@@ -171,7 +211,7 @@ class HyenaDNAModel(HFClassifierModel):
         tokens = encoded["input_ids"]
 
         return tokens.to(self.device), None
-    
+
     def forward(self, seqs):
         tokens, _ = self._tokenize(seqs)
 
@@ -184,8 +224,12 @@ class HyenaDNAModel(HFClassifierModel):
 class CaduceusModel(HFClassifierModel):
     def __init__(self, model_name, num_labels):
         model_name = f"kuleshov-group/{model_name}"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, padding_side="right")
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=True, padding_side="right"
+        )
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
 
         super().__init__(tokenizer, model)
 
@@ -195,7 +239,7 @@ class CaduceusModel(HFClassifierModel):
         tokens = encoded["input_ids"]
 
         return tokens.to(self.device), None
-    
+
     def forward(self, seqs):
         tokens, _ = self._tokenize(seqs)
 

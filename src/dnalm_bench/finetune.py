@@ -9,7 +9,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModel, AutoModelForCausalLM, BertConfig
+from transformers import (
+    AutoTokenizer,
+    AutoModelForMaskedLM,
+    AutoModel,
+    AutoModelForCausalLM,
+    BertConfig,
+)
 from scipy.stats import wilcoxon
 from tqdm import tqdm
 import h5py
@@ -24,13 +30,28 @@ class LoRAModule(nn.Module):
 
         lora_config = {
             nn.Embedding: {
-                "weight": partial(minlora.LoRAParametrization.from_embedding, rank=lora_rank, lora_dropout_p=lora_dropout, lora_alpha=lora_alpha),
+                "weight": partial(
+                    minlora.LoRAParametrization.from_embedding,
+                    rank=lora_rank,
+                    lora_dropout_p=lora_dropout,
+                    lora_alpha=lora_alpha,
+                ),
             },
             nn.Linear: {
-                "weight": partial(minlora.LoRAParametrization.from_linear, rank=lora_rank, lora_dropout_p=lora_dropout, lora_alpha=lora_alpha),
+                "weight": partial(
+                    minlora.LoRAParametrization.from_linear,
+                    rank=lora_rank,
+                    lora_dropout_p=lora_dropout,
+                    lora_alpha=lora_alpha,
+                ),
             },
             nn.Conv1d: {
-                "weight": partial(minlora.LoRAParametrization.from_conv2d, rank=lora_rank, lora_dropout_p=lora_dropout, lora_alpha=lora_alpha),
+                "weight": partial(
+                    minlora.LoRAParametrization.from_conv2d,
+                    rank=lora_rank,
+                    lora_dropout_p=lora_dropout,
+                    lora_alpha=lora_alpha,
+                ),
             },
         }
 
@@ -39,11 +60,15 @@ class LoRAModule(nn.Module):
         for n, p in model.named_parameters():
             if not minlora.name_is_lora(n):
                 p.requires_grad = False
-        self.model._register_state_dict_hook(self._state_dict_hook)   
+        self.model._register_state_dict_hook(self._state_dict_hook)
 
     @staticmethod
     def _state_dict_hook(self, state_dict, prefix, local_metadata):
-        keys_discard = [k for k in state_dict.keys() if k.startswith(prefix) and not minlora.name_is_lora(k)]
+        keys_discard = [
+            k
+            for k in state_dict.keys()
+            if k.startswith(prefix) and not minlora.name_is_lora(k)
+        ]
         for k in keys_discard:
             del state_dict[k]
 
@@ -60,7 +85,7 @@ class HFClassifierModel(nn.Module):
 
         device_indicator = torch.empty(0)
         self.register_buffer("device_indicator", device_indicator)
-        
+
     def _tokenize(self, seqs):
         seqs_str = onehot_to_chars(seqs)
         encoded = self.tokenizer(seqs_str, return_tensors="pt", padding=True)

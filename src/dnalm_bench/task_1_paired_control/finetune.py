@@ -10,7 +10,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, ConcatDataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, BertConfig, AutoModel
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    BertConfig,
+    AutoModel,
+)
 from tqdm import tqdm
 import polars as pl
 from sklearn.metrics import roc_auc_score, average_precision_score, matthews_corrcoef
@@ -19,11 +24,38 @@ from ..finetune import HFClassifierModel, LoRAModule
 from ..utils import onehot_to_chars, one_hot_encode, NoModule, copy_if_not_exists
 
 
-def train_finetuned_classifier(train_dataset, val_dataset, model, num_epochs, out_dir, batch_size, lr, wd, accumulate, num_workers, prefetch_factor, device, progress_bar=False, resume_from=None):
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers,
-                                  pin_memory=True, prefetch_factor=prefetch_factor, persistent_workers=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, 
-                                pin_memory=True, prefetch_factor=prefetch_factor, persistent_workers=True)
+def train_finetuned_classifier(
+    train_dataset,
+    val_dataset,
+    model,
+    num_epochs,
+    out_dir,
+    batch_size,
+    lr,
+    wd,
+    accumulate,
+    num_workers,
+    prefetch_factor,
+    device,
+    progress_bar=False,
+    resume_from=None,
+):
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=True,
+    )
+    val_dataloader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=True,
+    )
 
     os.makedirs(out_dir, exist_ok=True)
     log_file = os.path.join(out_dir, "train.log")
@@ -45,7 +77,9 @@ def train_finetuned_classifier(train_dataset, val_dataset, model, num_epochs, ou
             optimizer_resume = torch.load(optimizer_checkpoint_path)
             optimizer.load_state_dict(optimizer_resume)
         except FileNotFoundError:
-            warnings.warn(f"Optimizer checkpoint not found at {optimizer_checkpoint_path}")
+            warnings.warn(
+                f"Optimizer checkpoint not found at {optimizer_checkpoint_path}"
+            )
     else:
         start_epoch = 0
 
@@ -58,29 +92,45 @@ def train_finetuned_classifier(train_dataset, val_dataset, model, num_epochs, ou
         for epoch in range(start_epoch, num_epochs):
             optimizer.zero_grad()
             model.train()
-            for i, (seq, ctrl, _) in enumerate(tqdm(train_dataloader, disable=(not progress_bar), desc="train", ncols=120)):
+            for i, (seq, ctrl, _) in enumerate(
+                tqdm(
+                    train_dataloader,
+                    disable=(not progress_bar),
+                    desc="train",
+                    ncols=120,
+                )
+            ):
                 # seq = seq.to(device)
                 # ctrl = ctrl.to(device)
-                
+
                 out_seq = model(seq)
                 loss_seq = criterion(out_seq, one.expand(out_seq.shape[0])) / accumulate
                 loss_seq.backward()
                 out_ctrl = model(ctrl)
-                loss_ctrl = criterion(out_ctrl, zero.expand(out_ctrl.shape[0])) / accumulate
+                loss_ctrl = (
+                    criterion(out_ctrl, zero.expand(out_ctrl.shape[0])) / accumulate
+                )
                 loss_ctrl.backward()
 
-                if ((i + 1) % accumulate == 0):
+                if (i + 1) % accumulate == 0:
                     optimizer.step()
                     optimizer.zero_grad()
 
             optimizer.step()
-        
+
             val_loss = 0
             val_acc = 0
             val_acc_paired = 0
             model.eval()
             with torch.no_grad():
-                for i, (seq, ctrl, _) in enumerate(tqdm(val_dataloader, disable=(not progress_bar), desc="val", ncols=120)):
+                for i, (seq, ctrl, _) in enumerate(
+                    tqdm(
+                        val_dataloader,
+                        disable=(not progress_bar),
+                        desc="val",
+                        ncols=120,
+                    )
+                ):
                     # seq = seq.to(device)
                     # ctrl = ctrl.to(device)
 
@@ -89,14 +139,18 @@ def train_finetuned_classifier(train_dataset, val_dataset, model, num_epochs, ou
                     loss_seq = criterion(out_seq, one.expand(out_seq.shape[0]))
                     loss_ctrl = criterion(out_ctrl, zero.expand(out_ctrl.shape[0]))
                     val_loss += (loss_seq + loss_ctrl).item()
-                    val_acc += (out_seq.argmax(1) == 1).sum().item() + (out_ctrl.argmax(1) == 0).sum().item()
+                    val_acc += (out_seq.argmax(1) == 1).sum().item() + (
+                        out_ctrl.argmax(1) == 0
+                    ).sum().item()
                     val_acc_paired += ((out_seq - out_ctrl).argmax(1) == 1).sum().item()
-            
+
             val_loss /= len(val_dataloader.dataset) * 2
             val_acc /= len(val_dataloader.dataset) * 2
             val_acc_paired /= len(val_dataloader.dataset)
 
-            print(f"Epoch {epoch}: val_loss={val_loss}, val_acc={val_acc}, val_acc_paired={val_acc_paired}")
+            print(
+                f"Epoch {epoch}: val_loss={val_loss}, val_acc={val_acc}, val_acc_paired={val_acc_paired}"
+            )
             f.write(f"{epoch}\t{val_loss}\t{val_acc}\t{val_acc_paired}\n")
             f.flush()
 
@@ -106,15 +160,29 @@ def train_finetuned_classifier(train_dataset, val_dataset, model, num_epochs, ou
             torch.save(optimizer.state_dict(), optimizer_checkpoint_path)
 
 
-def evaluate_finetuned_classifier(test_dataset, model, out_path, batch_size,num_workers, prefetch_factor, device, progress_bar=False):
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers,
-                                  pin_memory=True, prefetch_factor=prefetch_factor)
+def evaluate_finetuned_classifier(
+    test_dataset,
+    model,
+    out_path,
+    batch_size,
+    num_workers,
+    prefetch_factor,
+    device,
+    progress_bar=False,
+):
+    test_dataloader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=True,
+        prefetch_factor=prefetch_factor,
+    )
 
     zero = torch.tensor(0, dtype=torch.long, device=device)[None]
     one = torch.tensor(1, dtype=torch.long, device=device)[None]
 
     model.to(device)
-    
+
     # os.makedirs(out_dir, exist_ok=True)
     # scores_path = os.path.join(out_dir, "scores.tsv")
     # metrics_path = os.path.join(out_dir, "metrics.json")
@@ -130,7 +198,9 @@ def evaluate_finetuned_classifier(test_dataset, model, out_path, batch_size,num_
     test_acc_paired = 0
     pred_log_probs = []
     labels = []
-    for i, (seq, ctrl, inds) in enumerate(tqdm(test_dataloader, disable=(not progress_bar), desc="train", ncols=120)):
+    for i, (seq, ctrl, inds) in enumerate(
+        tqdm(test_dataloader, disable=(not progress_bar), desc="train", ncols=120)
+    ):
         with torch.no_grad():
             out_seq = model(seq)
             out_ctrl = model(ctrl)
@@ -145,13 +215,15 @@ def evaluate_finetuned_classifier(test_dataset, model, out_path, batch_size,num_
             test_acc_paired += ((out_seq - out_ctrl).argmax(1) == 1).sum().item()
 
     pred_log_probs = torch.cat(pred_log_probs, dim=0).numpy(force=True)
-    pred_logits = pred_log_probs[:,1] - pred_log_probs[:,0]
+    pred_logits = pred_log_probs[:, 1] - pred_log_probs[:, 0]
     labels = torch.cat(labels, dim=0).numpy(force=True)
 
     test_loss /= len(test_dataloader.dataset) * 2
     test_acc_paired /= len(test_dataloader.dataset)
 
-    test_acc = (pred_log_probs.argmax(axis=1) == labels).sum().item() / (len(test_dataloader.dataset) * 2)
+    test_acc = (pred_log_probs.argmax(axis=1) == labels).sum().item() / (
+        len(test_dataloader.dataset) * 2
+    )
     test_auroc = roc_auc_score(labels, pred_logits)
     test_auprc = average_precision_score(labels, pred_logits)
     test_mcc = matthews_corrcoef(labels, pred_log_probs.argmax(axis=1))
@@ -168,17 +240,25 @@ def evaluate_finetuned_classifier(test_dataset, model, out_path, batch_size,num_
 
     return metrics
 
-    
+
 class DNABERT2LoRAModel(HFClassifierModel):
     def __init__(self, model_name, lora_rank, lora_alpha, lora_dropout, num_labels):
         model_name = f"zhihan1996/{model_name}"
         with NoModule("triton"):
-            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name, trust_remote_code=True
+            )
             config = BertConfig.from_pretrained(model_name)
             config.num_labels = num_labels
-            model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, config=config)
-            model.bert.embeddings = LoRAModule(model.bert.embeddings, lora_rank, lora_alpha, lora_dropout)
-            model.bert.encoder = LoRAModule(model.bert.encoder, lora_rank, lora_alpha, lora_dropout)
+            model = AutoModelForSequenceClassification.from_pretrained(
+                model_name, trust_remote_code=True, config=config
+            )
+            model.bert.embeddings = LoRAModule(
+                model.bert.embeddings, lora_rank, lora_alpha, lora_dropout
+            )
+            model.bert.encoder = LoRAModule(
+                model.bert.encoder, lora_rank, lora_alpha, lora_dropout
+            )
 
         super().__init__(tokenizer, model)
 
@@ -187,10 +267,12 @@ class MistralDNALoRAModel(HFClassifierModel):
     def __init__(self, model_name, lora_rank, lora_alpha, lora_dropout, num_labels):
         model_name = f"RaphaelMourad/{model_name}"
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
         model.config.pad_token_id = tokenizer.pad_token_id
         model.model = LoRAModule(model.model, lora_rank, lora_alpha, lora_dropout)
-        
+
         super().__init__(tokenizer, model)
 
 
@@ -200,11 +282,17 @@ class GENALMLoRAModel(HFClassifierModel):
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
         model_base = AutoModel.from_pretrained(model_name, trust_remote_code=True)
         gena_module_name = model_base.__class__.__module__
-        cls = getattr(importlib.import_module(gena_module_name), 'BertForSequenceClassification')
+        cls = getattr(
+            importlib.import_module(gena_module_name), "BertForSequenceClassification"
+        )
         model = cls.from_pretrained(model_name, num_labels=num_labels)
 
-        model.bert.embeddings = LoRAModule(model.bert.embeddings, lora_rank, lora_alpha, lora_dropout)
-        model.bert.encoder = LoRAModule(model.bert.encoder, lora_rank, lora_alpha, lora_dropout)
+        model.bert.embeddings = LoRAModule(
+            model.bert.embeddings, lora_rank, lora_alpha, lora_dropout
+        )
+        model.bert.encoder = LoRAModule(
+            model.bert.encoder, lora_rank, lora_alpha, lora_dropout
+        )
 
         super().__init__(tokenizer, model)
 
@@ -213,7 +301,9 @@ class NucleotideTransformerLoRAModel(HFClassifierModel):
     def __init__(self, model_name, lora_rank, lora_alpha, lora_dropout, num_labels):
         model_name = f"InstaDeepAI/{model_name}"
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
         model.esm = LoRAModule(model.esm, lora_rank, lora_alpha, lora_dropout)
 
         super().__init__(tokenizer, model)
@@ -229,8 +319,12 @@ class NucleotideTransformerLoRAModel(HFClassifierModel):
 class HyenaDNALoRAModel(HFClassifierModel):
     def __init__(self, model_name, lora_rank, lora_alpha, lora_dropout, num_labels):
         model_name = f"LongSafari/{model_name}"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, padding_side="right")
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=True, padding_side="right"
+        )
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
         model.hyena = LoRAModule(model.hyena, lora_rank, lora_alpha, lora_dropout)
 
         super().__init__(tokenizer, model)
@@ -241,7 +335,7 @@ class HyenaDNALoRAModel(HFClassifierModel):
         tokens = encoded["input_ids"]
 
         return tokens.to(self.device), None
-    
+
     def forward(self, seqs):
         tokens, _ = self._tokenize(seqs)
 
@@ -254,8 +348,12 @@ class HyenaDNALoRAModel(HFClassifierModel):
 class CaduceusLoRAModel(HFClassifierModel):
     def __init__(self, model_name, lora_rank, lora_alpha, lora_dropout, num_labels):
         model_name = f"kuleshov-group/{model_name}"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, padding_side="right")
-        model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True, num_labels=num_labels)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=True, padding_side="right"
+        )
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, trust_remote_code=True, num_labels=num_labels
+        )
         model.caduceus = LoRAModule(model.caduceus, lora_rank, lora_alpha, lora_dropout)
 
         super().__init__(tokenizer, model)
@@ -266,7 +364,7 @@ class CaduceusLoRAModel(HFClassifierModel):
         tokens = encoded["input_ids"]
 
         return tokens.to(self.device), None
-    
+
     def forward(self, seqs):
         tokens, _ = self._tokenize(seqs)
 
@@ -277,31 +375,50 @@ class CaduceusLoRAModel(HFClassifierModel):
 
 
 class LargeCNNClassifier(torch.nn.Module):
-    def __init__(self, input_channels, n_filters, n_residual_convs, output_channels, seq_len, pos_channels=1, first_kernel_size=21, residual_kernel_size=3):
+    def __init__(
+        self,
+        input_channels,
+        n_filters,
+        n_residual_convs,
+        output_channels,
+        seq_len,
+        pos_channels=1,
+        first_kernel_size=21,
+        residual_kernel_size=3,
+    ):
         super().__init__()
         self.n_residual_convs = n_residual_convs
-        self.iconv = torch.nn.Conv1d(input_channels, n_filters, kernel_size=first_kernel_size)
+        self.iconv = torch.nn.Conv1d(
+            input_channels, n_filters, kernel_size=first_kernel_size
+        )
         self.irelu = torch.nn.ReLU()
 
         self.pos_emb = torch.nn.Parameter(torch.zeros(seq_len, pos_channels))
         self.pos_proj = torch.nn.Linear(pos_channels, n_filters)
 
-        self.rconvs = torch.nn.ModuleList([
-            torch.nn.Conv1d(n_filters, n_filters, kernel_size=residual_kernel_size, 
-                dilation=2**i) for i in range(n_residual_convs)
-        ])
-        self.rrelus = torch.nn.ModuleList([
-            torch.nn.ReLU() for i in range(n_residual_convs)
-        ])
+        self.rconvs = torch.nn.ModuleList(
+            [
+                torch.nn.Conv1d(
+                    n_filters,
+                    n_filters,
+                    kernel_size=residual_kernel_size,
+                    dilation=2**i,
+                )
+                for i in range(n_residual_convs)
+            ]
+        )
+        self.rrelus = torch.nn.ModuleList(
+            [torch.nn.ReLU() for i in range(n_residual_convs)]
+        )
         self.output_layer = torch.nn.Linear(n_filters, output_channels)
 
         device_indicator = torch.empty(0)
         self.register_buffer("device_indicator", device_indicator)
-    
+
     @property
     def device(self):
         return self.device_indicator.device
-        
+
     def forward(self, x):
         x = x.to(self.device).float()
 
@@ -311,17 +428,17 @@ class LargeCNNClassifier(torch.nn.Module):
         p = self.pos_proj(self.pos_emb)
         x = self.irelu(x + p)
         x = x.swapaxes(1, 2)
-        
+
         # x = self.irelu(self.iconv(x))
-        
+
         for i in range(self.n_residual_convs):
             x_conv = self.rrelus[i](self.rconvs[i](x))
             crop_amount = (x.shape[-1] - x_conv.shape[-1]) // 2
-            x_cropped = x[:,:,crop_amount:-crop_amount]
+            x_cropped = x[:, :, crop_amount:-crop_amount]
             x = torch.add(x_cropped, x_conv)
-            
+
         x = torch.mean(x, dim=-1)
-        
+
         final_out = self.output_layer(x)
-        
+
         return final_out

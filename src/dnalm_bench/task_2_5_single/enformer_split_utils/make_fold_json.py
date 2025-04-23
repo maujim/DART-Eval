@@ -12,8 +12,7 @@ train_len, valid_len, test_len = len(train_peaks), len(valid_peaks), len(test_pe
 split_dict = {
     "train": list(range(train_len)),
     "valid": list(range(train_len, train_len + valid_len)),
-    "test": list(range(train_len + valid_len, train_len + valid_len + test_len))
-
+    "test": list(range(train_len + valid_len, train_len + valid_len + test_len)),
 }
 
 assert split_dict["valid"][0] == split_dict["train"][-1] + 1

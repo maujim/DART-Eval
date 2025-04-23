@@ -15,25 +15,36 @@ if __name__ == "__main__":
     num_workers = 0
     seed = 0
     device = "cuda"
-    chroms=None
+    chroms = None
 
     variants_bed = sys.argv[1]
     output_prefix = sys.argv[2]
     genome_fa = sys.argv[3]
     cell_line = "GM12878"
 
-    out_dir = os.path.join(root_output_dir, f"task_5_variant_effect_prediction/outputs/zero_shot/embeddings/{model_name}")
+    out_dir = os.path.join(
+        root_output_dir,
+        f"task_5_variant_effect_prediction/outputs/zero_shot/embeddings/{model_name}",
+    )
     os.makedirs(out_dir, exist_ok=True)
-    
+
     out_path = os.path.join(out_dir, output_prefix + ".tsv")
 
-    allele1_embeddings_path = os.path.join(out_dir, f"{output_prefix}_allele1_embeddings.npy")
-    allele2_embeddings_path = os.path.join(out_dir, f"{output_prefix}_allele2_embeddings.npy")
+    allele1_embeddings_path = os.path.join(
+        out_dir, f"{output_prefix}_allele1_embeddings.npy"
+    )
+    allele2_embeddings_path = os.path.join(
+        out_dir, f"{output_prefix}_allele2_embeddings.npy"
+    )
 
     dataset = VariantDataset(genome_fa, variants_bed, chroms, seed)
-    evaluator = CaduceusVariantEmbeddingEvaluator(model_name, batch_size, num_workers, device)
+    evaluator = CaduceusVariantEmbeddingEvaluator(
+        model_name, batch_size, num_workers, device
+    )
 
-    score_df, allele1_embeddings, allele2_embeddings = evaluator.evaluate(dataset, out_path, progress_bar=True)
+    score_df, allele1_embeddings, allele2_embeddings = evaluator.evaluate(
+        dataset, out_path, progress_bar=True
+    )
 
     df = dataset.elements_df
     scored_df = pl.concat([df, score_df], how="horizontal")

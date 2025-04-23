@@ -16,8 +16,12 @@ if __name__ == "__main__":
 
     model_name = "hyenadna-large-1m-seqlen-hf"
 
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
-    elements_tsv = os.path.join(work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
+    elements_tsv = os.path.join(
+        work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
+    )
 
     batch_size = 4096
     num_workers = 4
@@ -41,22 +45,12 @@ if __name__ == "__main__":
         "chr17",
         "chr19",
         "chrX",
-        "chrY"
-    ]
-    
-    chroms_val = [
-        "chr6",
-        "chr21"
+        "chrY",
     ]
 
-    chroms_test = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    chroms_val = ["chr6", "chr21"]
+
+    chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     modes = {"train": chroms_train, "val": chroms_val, "test": chroms_test}
 
@@ -68,13 +62,17 @@ if __name__ == "__main__":
     lora_alpha = 2 * lora_rank
     lora_dropout = 0.05
 
-    model_dir = os.path.join(work_dir, f"task_1_ccre/supervised_models/fine_tuned/{model_name}")
+    model_dir = os.path.join(
+        work_dir, f"task_1_ccre/supervised_models/fine_tuned/{model_name}"
+    )
     train_log = os.path.join(model_dir, "train.log")
     df = pd.read_csv(train_log, sep="\t")
-    checkpoint_num = int(df["epoch"][np.argmin(df["val_loss"])])    
+    checkpoint_num = int(df["epoch"][np.argmin(df["val_loss"])])
     checkpoint_path = os.path.join(model_dir, f"checkpoint_{checkpoint_num}.pt")
 
-    out_dir = os.path.join(work_dir, f"task_1_ccre/supervised_model_outputs/fine_tuned/{model_name}")
+    out_dir = os.path.join(
+        work_dir, f"task_1_ccre/supervised_model_outputs/fine_tuned/{model_name}"
+    )
 
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"eval_{eval_mode}.json")
@@ -84,7 +82,16 @@ if __name__ == "__main__":
     model = HyenaDNALoRAModel(model_name, lora_rank, lora_alpha, lora_dropout, 2)
     checkpoint_resume = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint_resume, strict=False)
-    metrics = evaluate_finetuned_classifier(test_dataset, model, out_path, batch_size, num_workers, prefetch_factor, device, progress_bar=True)
-    
+    metrics = evaluate_finetuned_classifier(
+        test_dataset,
+        model,
+        out_path,
+        batch_size,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+    )
+
     for k, v in metrics.items():
         print(f"{k}: {v}")

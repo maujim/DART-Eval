@@ -7,8 +7,12 @@ work_dir = os.environ.get("DART_WORK_DIR", "")
 
 if __name__ == "__main__":
     model_name = "caduceus-ps_seqlen-131k_d_model-256_n_layer-16"
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
-    elements_tsv = os.path.join(work_dir, "task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
+    elements_tsv = os.path.join(
+        work_dir, "task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
+    )
     chroms = None
     batch_size = 512
     num_workers = 0

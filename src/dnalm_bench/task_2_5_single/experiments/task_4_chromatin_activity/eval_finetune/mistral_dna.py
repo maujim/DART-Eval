@@ -5,7 +5,11 @@ import torch
 import numpy as np
 import pandas as pd
 
-from ....finetune import ChromatinEndToEndDataset, evaluate_finetuned_chromatin_model, MistralDNALoRAModel
+from ....finetune import (
+    ChromatinEndToEndDataset,
+    evaluate_finetuned_chromatin_model,
+    MistralDNALoRAModel,
+)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -13,17 +17,31 @@ work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")
 
 if __name__ == "__main__":
-    cell_line = sys.argv[1] #cell line name
+    cell_line = sys.argv[1]  # cell line name
     eval_mode = sys.argv[2] if len(sys.argv) > 2 else "test"
 
     model_name = "Mistral-DNA-v1-1.6B-hg38"
 
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
 
-    peaks_tsv = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_peaks.bed")
-    idr_peaks_tsv = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/cell_line_idr_peaks/{cell_line}.bed")
-    nonpeaks_tsv = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_nonpeaks.bed")
-    assay_bw = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/bigwigs/{cell_line}_unstranded.bw")
+    peaks_tsv = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_peaks.bed",
+    )
+    idr_peaks_tsv = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/cell_line_idr_peaks/{cell_line}.bed",
+    )
+    nonpeaks_tsv = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_nonpeaks.bed",
+    )
+    assay_bw = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/bigwigs/{cell_line}_unstranded.bw",
+    )
 
     batch_size = 24
     num_workers = 4
@@ -47,22 +65,12 @@ if __name__ == "__main__":
         "chr17",
         "chr19",
         "chrX",
-        "chrY"
-    ]
-    
-    chroms_val = [
-        "chr6",
-        "chr21"
+        "chrY",
     ]
 
-    chroms_test = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    chroms_val = ["chr6", "chr21"]
+
+    chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     modes = {"train": chroms_train, "val": chroms_val, "test": chroms_test}
 
@@ -74,28 +82,50 @@ if __name__ == "__main__":
     lora_alpha = 2 * lora_rank
     lora_dropout = 0.05
 
-    model_dir = os.path.join(work_dir, f"task_4_chromatin_activity/supervised_models/fine_tuned/{model_name}/{cell_line}")
+    model_dir = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/supervised_models/fine_tuned/{model_name}/{cell_line}",
+    )
     train_log = f"{model_dir}/train.log"
     df = pd.read_csv(train_log, sep="\t")
     checkpoint_num = int(df["epoch"][np.argmin(df["val_loss"])])
-    checkpoint_path = os.path.join(model_dir, f"checkpoint_{checkpoint_num}.pt") 
+    checkpoint_path = os.path.join(model_dir, f"checkpoint_{checkpoint_num}.pt")
 
-    out_dir = os.path.join(work_dir, f"task_4_chromatin_activity/supervised_model_outputs/fine_tuned/{model_name}/{cell_line}")
+    out_dir = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/supervised_model_outputs/fine_tuned/{model_name}/{cell_line}",
+    )
 
     os.makedirs(out_dir, exist_ok=True)
 
     out_path = os.path.join(out_dir, f"eval_{eval_mode}.json")
 
-    pos_dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, peaks_tsv, modes[eval_mode], crop, cache_dir=cache_dir)
-    idr_dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, idr_peaks_tsv, modes[eval_mode], crop, cache_dir=cache_dir)
-    neg_dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, nonpeaks_tsv, modes[eval_mode], crop, cache_dir=cache_dir)
+    pos_dataset = ChromatinEndToEndDataset(
+        genome_fa, assay_bw, peaks_tsv, modes[eval_mode], crop, cache_dir=cache_dir
+    )
+    idr_dataset = ChromatinEndToEndDataset(
+        genome_fa, assay_bw, idr_peaks_tsv, modes[eval_mode], crop, cache_dir=cache_dir
+    )
+    neg_dataset = ChromatinEndToEndDataset(
+        genome_fa, assay_bw, nonpeaks_tsv, modes[eval_mode], crop, cache_dir=cache_dir
+    )
 
     model = MistralDNALoRAModel(model_name, lora_rank, lora_alpha, lora_dropout, 1)
     checkpoint_resume = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint_resume, strict=False)
 
-    metrics = evaluate_finetuned_chromatin_model(pos_dataset, idr_dataset, neg_dataset, model, batch_size, out_path,
-                                       num_workers, prefetch_factor, device, progress_bar=True)
-    
+    metrics = evaluate_finetuned_chromatin_model(
+        pos_dataset,
+        idr_dataset,
+        neg_dataset,
+        model,
+        batch_size,
+        out_path,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+    )
+
     for k, v in metrics.items():
         print(f"{k}: {v}")

@@ -1,7 +1,11 @@
 import os
 import sys
 
-from ....finetune import PeaksEndToEndDataset, train_finetuned_peak_classifier, LargeCNNClassifier
+from ....finetune import (
+    PeaksEndToEndDataset,
+    train_finetuned_peak_classifier,
+    LargeCNNClassifier,
+)
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")
@@ -11,8 +15,13 @@ if __name__ == "__main__":
 
     model_name = "chrombpnet_like"
 
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
-    elements_tsv = os.path.join(work_dir,"task_3_peak_classification/processed_inputs/peaks_by_cell_label_unique_dataloader_format.tsv")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
+    elements_tsv = os.path.join(
+        work_dir,
+        "task_3_peak_classification/processed_inputs/peaks_by_cell_label_unique_dataloader_format.tsv",
+    )
 
     batch_size = 2048
     num_workers = 4
@@ -36,22 +45,12 @@ if __name__ == "__main__":
         "chr17",
         "chr19",
         "chrX",
-        "chrY"
-    ]
-    
-    chroms_val = [
-        "chr6",
-        "chr21"
+        "chrY",
     ]
 
-    chroms_test = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    chroms_val = ["chr6", "chr21"]
+
+    chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     emb_channels = 256
 
@@ -61,29 +60,41 @@ if __name__ == "__main__":
     seq_len = 480
 
     accumulate = 1
-    
+
     lr = 1e-4
     wd = 0
     num_epochs = 200
 
-    out_dir = os.path.join(work_dir, f"task_3_peak_classification/supervised_models/ab_initio/{model_name}")    
+    out_dir = os.path.join(
+        work_dir, f"task_3_peak_classification/supervised_models/ab_initio/{model_name}"
+    )
 
     os.makedirs(out_dir, exist_ok=True)
-    
-    classes = {
-        "GM12878": 0,
-        "H1ESC": 1,
-        "HEPG2": 2,
-        "IMR90": 3,
-        "K562": 4
-    } 
 
-    train_dataset = PeaksEndToEndDataset(genome_fa, elements_tsv, chroms_train, classes, cache_dir=cache_dir)
-    val_dataset = PeaksEndToEndDataset(genome_fa, elements_tsv, chroms_val, classes, cache_dir=cache_dir)
+    classes = {"GM12878": 0, "H1ESC": 1, "HEPG2": 2, "IMR90": 3, "K562": 4}
+
+    train_dataset = PeaksEndToEndDataset(
+        genome_fa, elements_tsv, chroms_train, classes, cache_dir=cache_dir
+    )
+    val_dataset = PeaksEndToEndDataset(
+        genome_fa, elements_tsv, chroms_val, classes, cache_dir=cache_dir
+    )
 
     model = LargeCNNClassifier(4, n_filters, n_residual_convs, len(classes), seq_len)
 
-
-    train_finetuned_peak_classifier(train_dataset, val_dataset, model, 
-                                    num_epochs, out_dir, batch_size, lr, wd, accumulate,
-                                    num_workers, prefetch_factor, device, progress_bar=True, resume_from=resume_checkpoint)
+    train_finetuned_peak_classifier(
+        train_dataset,
+        val_dataset,
+        model,
+        num_epochs,
+        out_dir,
+        batch_size,
+        lr,
+        wd,
+        accumulate,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+        resume_from=resume_checkpoint,
+    )

@@ -6,12 +6,19 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModel, AutoModelForCausalLM, BertConfig
+from transformers import (
+    AutoTokenizer,
+    AutoModelForMaskedLM,
+    AutoModel,
+    AutoModelForCausalLM,
+    BertConfig,
+)
 from scipy.stats import wilcoxon
 from tqdm import tqdm
 
 from ..components import PairedControlDataset
 from ...utils import onehot_to_chars, NoModule
+
 
 class MaskedZeroShotScore(metaclass=ABCMeta):
     @property
@@ -27,13 +34,15 @@ class MaskedZeroShotScore(metaclass=ABCMeta):
         for i in range(tokens.shape[1]):
             clip_mask = ((i >= starts) & (i < ends)).to(device=self.device)
             masked_tokens = tokens.clone()
-            masked_tokens[:,i,...] = self.mask_token
-            lls[:,i] = self.model_fwd(masked_tokens, attention_mask, tokens)[:,i] * clip_mask
+            masked_tokens[:, i, ...] = self.mask_token
+            lls[:, i] = (
+                self.model_fwd(masked_tokens, attention_mask, tokens)[:, i] * clip_mask
+            )
 
         out = lls.sum(dim=1).numpy(force=True)
 
         return out
-    
+
 
 class CausalZeroShotScore(metaclass=ABCMeta):
     def score(self, tokens, starts, ends, attention_mask):
@@ -43,9 +52,9 @@ class CausalZeroShotScore(metaclass=ABCMeta):
         lls = self.model_fwd(tokens, attention_mask, tokens)
         clip_mask = torch.zeros_like(lls)
         for i in range(lls.shape[1]):
-            clip_mask[:,i] = ((i >= starts) & (i < ends))
+            clip_mask[:, i] = (i >= starts) & (i < ends)
 
-        # clip_mask = torch.tensor([[(i >= s) and (i < e) for i in range(lls.shape[1])] for s, e in zip(starts, ends)], 
+        # clip_mask = torch.tensor([[(i >= s) and (i < e) for i in range(lls.shape[1])] for s, e in zip(starts, ends)],
         #                          dtype=torch.float).to(device=self.device)
 
         out = (lls * clip_mask).sum(1).numpy(force=True)
@@ -57,7 +66,9 @@ class ZeroShotPairedControlEvaluator(metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, dataset, batch_size, num_workers, device):
         self.dataset = dataset
-        self.dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+        self.dataloader = DataLoader(
+            self.dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        )
 
         self.device = device
 
@@ -72,7 +83,7 @@ class ZeroShotPairedControlEvaluator(metaclass=ABCMeta):
     # @abstractmethod
     # def score(self, tokens, starts, ends, attention_mask):
     #     pass
-    
+
     def evaluate(self, out_dir, progress_bar=False):
         os.makedirs(out_dir, exist_ok=True)
         scores_path = os.path.join(out_dir, "scores.tsv")
@@ -84,13 +95,23 @@ class ZeroShotPairedControlEvaluator(metaclass=ABCMeta):
             metrics = {}
             diffs_lst = []
             corrects_lst = []
-            
-            for seqs, ctrls, inds in tqdm(self.dataloader, disable=(not progress_bar), ncols=120):
-                seq_tokens, seq_starts, seq_ends, seq_attention_mask = self.tokenize(seqs)
-                ctrl_tokens, ctrl_starts, ctrl_ends, ctrl_attention_mask = self.tokenize(ctrls)
 
-                seq_scores = self.score(seq_tokens, seq_starts, seq_ends, seq_attention_mask)
-                ctrl_scores = self.score(ctrl_tokens, ctrl_starts, ctrl_ends, ctrl_attention_mask)
+            for seqs, ctrls, inds in tqdm(
+                self.dataloader, disable=(not progress_bar), ncols=120
+            ):
+                seq_tokens, seq_starts, seq_ends, seq_attention_mask = self.tokenize(
+                    seqs
+                )
+                ctrl_tokens, ctrl_starts, ctrl_ends, ctrl_attention_mask = (
+                    self.tokenize(ctrls)
+                )
+
+                seq_scores = self.score(
+                    seq_tokens, seq_starts, seq_ends, seq_attention_mask
+                )
+                ctrl_scores = self.score(
+                    ctrl_tokens, ctrl_starts, ctrl_ends, ctrl_attention_mask
+                )
 
                 for ind, seq_score, ctrl_score in zip(inds, seq_scores, ctrl_scores):
                     f.write(f"{ind}\t{seq_score}\t{ctrl_score}\n")
@@ -139,26 +160,28 @@ class HFZeroShotEvaluator(ZeroShotPairedControlEvaluator, metaclass=ABCMeta):
     @abstractmethod
     def end_token(self):
         pass
-    
+
     @property
     def mask_token(self):
         return self.tokenizer.mask_token_id
 
     def tokenize(self, seqs):
         seqs_str = onehot_to_chars(seqs)
-        encoded = self.tokenizer.batch_encode_plus(seqs_str, return_tensors="pt", padding=True)
+        encoded = self.tokenizer.batch_encode_plus(
+            seqs_str, return_tensors="pt", padding=True
+        )
         tokens = encoded["input_ids"]
         attention_mask = encoded.get("attention_mask")
         if self.start_token is not None:
-            starts = torch.where(tokens == self.start_token)[1] + 1 
+            starts = torch.where(tokens == self.start_token)[1] + 1
         else:
             starts = 0
         if self.end_token is not None:
             ends = torch.where(tokens == self.end_token)[1]
         else:
-            ends = attention_mask.sum(dim=1) 
+            ends = attention_mask.sum(dim=1)
 
-        return tokens, starts, ends, attention_mask 
+        return tokens, starts, ends, attention_mask
 
     def model_fwd(self, tokens_in, attention_mask, tokens_out):
         with torch.no_grad():
@@ -169,21 +192,25 @@ class HFZeroShotEvaluator(ZeroShotPairedControlEvaluator, metaclass=ABCMeta):
             logits = torch_outs.logits.swapaxes(1, 2)
             lls = -F.cross_entropy(logits, tokens_out, reduction="none")
         return lls
-    
+
 
 class DNABERT2Evaluator(HFZeroShotEvaluator, MaskedZeroShotScore):
     def __init__(self, model_name, dataset, batch_size, num_workers, device):
         model_name = f"zhihan1996/{model_name}"
         with NoModule("triton"):
-            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name, trust_remote_code=True
+            )
             config = BertConfig.from_pretrained(model_name, trust_remote_code=True)
-            model = AutoModelForMaskedLM.from_pretrained(model_name, config=config, trust_remote_code=True)
+            model = AutoModelForMaskedLM.from_pretrained(
+                model_name, config=config, trust_remote_code=True
+            )
         super().__init__(tokenizer, model, dataset, batch_size, num_workers, device)
 
     @property
     def start_token(self):
         return 1
-    
+
     @property
     def end_token(self):
         return 2
@@ -199,7 +226,7 @@ class GenaLMEvaluator(HFZeroShotEvaluator, MaskedZeroShotScore):
     @property
     def start_token(self):
         return 1
-    
+
     @property
     def end_token(self):
         return 2
@@ -208,18 +235,20 @@ class GenaLMEvaluator(HFZeroShotEvaluator, MaskedZeroShotScore):
 class HDEvaluator(HFZeroShotEvaluator, CausalZeroShotScore):
     def __init__(self, model_name, dataset, batch_size, num_workers, device):
         model_name = f"LongSafari/{model_name}"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, padding_side="right")
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=True, padding_side="right"
+        )
         model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
         super().__init__(tokenizer, model, dataset, batch_size, num_workers, device)
 
     @property
     def start_token(self):
         return None
-    
+
     @property
     def end_token(self):
         return 1
-    
+
     def model_fwd(self, tokens_in, attention_mask, tokens_out):
         with torch.no_grad():
             torch_outs = self.model(
@@ -227,30 +256,32 @@ class HDEvaluator(HFZeroShotEvaluator, CausalZeroShotScore):
             )
             logits = torch_outs.logits.swapaxes(1, 2)
             lls = torch.zeros(tokens_out.shape[:2], device=self.device)
-            lls[:,1:] = -F.cross_entropy(logits[:,:,:-1], tokens_out[:,1:], reduction="none")
+            lls[:, 1:] = -F.cross_entropy(
+                logits[:, :, :-1], tokens_out[:, 1:], reduction="none"
+            )
         return lls
-    
+
 
 class CaduceusEvaluator(HFZeroShotEvaluator, MaskedZeroShotScore):
     def __init__(self, model_name, dataset, batch_size, num_workers, device):
         model_name = f"kuleshov-group/{model_name}"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, padding_side="right")
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=True, padding_side="right"
+        )
         model = AutoModelForMaskedLM.from_pretrained(model_name, trust_remote_code=True)
         super().__init__(tokenizer, model, dataset, batch_size, num_workers, device)
 
     @property
     def start_token(self):
         return None
-    
+
     @property
     def end_token(self):
         return 1
 
     def model_fwd(self, tokens_in, attention_mask, tokens_out):
         with torch.no_grad():
-            torch_outs = self.model(
-                tokens_in
-            )
+            torch_outs = self.model(tokens_in)
             logits = torch_outs.logits.swapaxes(1, 2)
             lls = -F.cross_entropy(logits, tokens_out, reduction="none")
         return lls
@@ -266,11 +297,11 @@ class MistralEvaluator(HFZeroShotEvaluator, CausalZeroShotScore):
     @property
     def start_token(self):
         return 1
-    
+
     @property
     def end_token(self):
         return 2
-    
+
     def model_fwd(self, tokens_in, attention_mask, tokens_out):
         with torch.no_grad():
             torch_outs = self.model(
@@ -279,7 +310,9 @@ class MistralEvaluator(HFZeroShotEvaluator, CausalZeroShotScore):
             )
             logits = torch_outs.logits.swapaxes(1, 2)
             lls = torch.zeros(tokens_out.shape[:2], device=self.device)
-            lls[:,1:] = -F.cross_entropy(logits[:,:,:-1], tokens_out[:,1:], reduction="none")
+            lls[:, 1:] = -F.cross_entropy(
+                logits[:, :, :-1], tokens_out[:, 1:], reduction="none"
+            )
         return lls
 
 
@@ -293,7 +326,7 @@ class NTEvaluator(HFZeroShotEvaluator, MaskedZeroShotScore):
     @property
     def start_token(self):
         return 3
-    
+
     @property
     def end_token(self):
         return None

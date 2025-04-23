@@ -1,7 +1,11 @@
 import os
 import sys
 
-from ....finetune import ChromatinEndToEndDataset, train_finetuned_chromatin_model, GENALMLoRAModel
+from ....finetune import (
+    ChromatinEndToEndDataset,
+    train_finetuned_chromatin_model,
+    GENALMLoRAModel,
+)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -9,16 +13,27 @@ work_dir = os.environ.get("DART_WORK_DIR", "")
 cache_dir = os.environ.get("DART_CACHE_DIR")
 
 if __name__ == "__main__":
-    cell_line = sys.argv[1] #cell line name
+    cell_line = sys.argv[1]  # cell line name
     resume_checkpoint = int(sys.argv[2]) if len(sys.argv) > 2 else None
 
     model_name = "gena-lm-bert-large-t2t"
 
-    genome_fa = os.path.join(work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta")
+    genome_fa = os.path.join(
+        work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    )
 
-    peaks_tsv = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_peaks.bed")
-    nonpeaks_tsv = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_nonpeaks.bed")
-    assay_bw = os.path.join(work_dir, f"task_4_chromatin_activity/processed_data/bigwigs/{cell_line}_unstranded.bw")
+    peaks_tsv = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_peaks.bed",
+    )
+    nonpeaks_tsv = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/cell_line_expanded_peaks/{cell_line}_nonpeaks.bed",
+    )
+    assay_bw = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/processed_data/bigwigs/{cell_line}_unstranded.bw",
+    )
 
     batch_size = 24
     num_workers = 4
@@ -42,22 +57,12 @@ if __name__ == "__main__":
         "chr17",
         "chr19",
         "chrX",
-        "chrY"
-    ]
-    
-    chroms_val = [
-        "chr6",
-        "chr21"
+        "chrY",
     ]
 
-    chroms_test = [
-        "chr5",
-        "chr10",
-        "chr14",
-        "chr18",
-        "chr20",
-        "chr22"
-    ]
+    chroms_val = ["chr6", "chr21"]
+
+    chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
     emb_channels = 1024
 
@@ -68,21 +73,53 @@ if __name__ == "__main__":
     lora_dropout = 0.05
 
     accumulate = 4
-    
+
     lr = 1e-4
     wd = 0.01
     num_epochs = 25
 
-    out_dir = os.path.join(work_dir, f"task_4_chromatin_activity/supervised_models/fine_tuned/{model_name}/{cell_line}")  
+    out_dir = os.path.join(
+        work_dir,
+        f"task_4_chromatin_activity/supervised_models/fine_tuned/{model_name}/{cell_line}",
+    )
 
     os.makedirs(out_dir, exist_ok=True)
 
-    train_pos_dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, peaks_tsv, chroms_train, crop, cache_dir=cache_dir)
-    train_neg_dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, nonpeaks_tsv, chroms_train, crop, cache_dir=cache_dir, downsample_ratio=10)
-    val_pos_dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, peaks_tsv, chroms_val, crop, cache_dir=cache_dir)
-    val_neg_dataset = ChromatinEndToEndDataset(genome_fa, assay_bw, nonpeaks_tsv, chroms_val, crop, cache_dir=cache_dir)
+    train_pos_dataset = ChromatinEndToEndDataset(
+        genome_fa, assay_bw, peaks_tsv, chroms_train, crop, cache_dir=cache_dir
+    )
+    train_neg_dataset = ChromatinEndToEndDataset(
+        genome_fa,
+        assay_bw,
+        nonpeaks_tsv,
+        chroms_train,
+        crop,
+        cache_dir=cache_dir,
+        downsample_ratio=10,
+    )
+    val_pos_dataset = ChromatinEndToEndDataset(
+        genome_fa, assay_bw, peaks_tsv, chroms_val, crop, cache_dir=cache_dir
+    )
+    val_neg_dataset = ChromatinEndToEndDataset(
+        genome_fa, assay_bw, nonpeaks_tsv, chroms_val, crop, cache_dir=cache_dir
+    )
 
     model = GENALMLoRAModel(model_name, lora_rank, lora_alpha, lora_dropout, 1)
-    train_finetuned_chromatin_model(train_pos_dataset, train_neg_dataset, val_pos_dataset, val_neg_dataset, model, 
-                                    num_epochs, out_dir, batch_size, lr, wd, accumulate, num_workers, prefetch_factor, device, 
-                                    progress_bar=True, resume_from=resume_checkpoint)
+    train_finetuned_chromatin_model(
+        train_pos_dataset,
+        train_neg_dataset,
+        val_pos_dataset,
+        val_neg_dataset,
+        model,
+        num_epochs,
+        out_dir,
+        batch_size,
+        lr,
+        wd,
+        accumulate,
+        num_workers,
+        prefetch_factor,
+        device,
+        progress_bar=True,
+        resume_from=resume_checkpoint,
+    )
