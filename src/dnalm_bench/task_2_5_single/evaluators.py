@@ -5,7 +5,7 @@ import polars as pl
 import torch
 import torch.nn.functional as F
 from scipy.spatial import distance
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import (
     AutoConfig,

@@ -1,12 +1,9 @@
 import os
 import sys
 
-from torch.utils.data import DataLoader
 
 from ....training import (
     CNNEmbeddingsPredictor,
-    LargeCNNEmbeddingsPredictor,
-    LargeCNNSlicedEmbeddingsPredictor,
     PeaksEmbeddingsDataset,
     train_peak_classifier,
 )

@@ -1,8 +1,6 @@
 import json
 import os
 
-import numpy as np
-import pandas as pd
 from statsmodels.stats.proportion import proportion_confint
 
 root_output_dir = os.environ.get("DART_WORK_DIR", "")

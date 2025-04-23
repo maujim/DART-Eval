@@ -1,5 +1,4 @@
 import os
-import sys
 
 from ....components import SimpleSequence
 from ....embeddings import MistralDNAEmbeddingExtractor

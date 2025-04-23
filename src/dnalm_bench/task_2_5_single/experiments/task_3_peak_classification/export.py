@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     classes = {"GM12878": 0, "H1ESC": 1, "HEPG2": 2, "IMR90": 3, "K562": 4}
 
-    out_path = os.path.join(work_dir, f"task_3_peak_classification/data.h5")
+    out_path = os.path.join(work_dir, "task_3_peak_classification/data.h5")
 
     batch_size = 8192
 

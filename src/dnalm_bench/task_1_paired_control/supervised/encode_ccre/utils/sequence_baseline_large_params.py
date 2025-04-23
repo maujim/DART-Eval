@@ -1,12 +1,8 @@
-import os
-import sys
 
-import torch
 
-from ....components import PairedControlDataset
 
 # from ....training import AssayEmbeddingsDataset, InterleavedIterableDataset, CNNEmbeddingsPredictor, train_predictor
-from ....finetune import LargeCNNClassifier, train_finetuned_classifier
+from ....finetune import LargeCNNClassifier
 
 if __name__ == "__main__":
     n_filters = 512

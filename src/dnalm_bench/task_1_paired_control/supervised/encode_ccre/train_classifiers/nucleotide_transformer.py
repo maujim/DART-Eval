@@ -1,7 +1,6 @@
 import os
 import sys
 
-from torch.utils.data import DataLoader
 
 from ...training import CNNEmbeddingsClassifier, EmbeddingsDataset, train_classifier
 
@@ -13,7 +12,7 @@ if __name__ == "__main__":
     model_name = "nucleotide-transformer-v2-500m-multi-species"
     embeddings_h5 = os.path.join(work_dir, f"task_1_ccre/embeddings/{model_name}.h5")
     elements_tsv = os.path.join(
-        work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
+        work_dir, "task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
     )
 
     batch_size = 2048

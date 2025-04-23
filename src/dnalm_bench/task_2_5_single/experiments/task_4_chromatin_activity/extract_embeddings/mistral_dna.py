@@ -9,7 +9,7 @@ root_output_dir = os.environ.get("DART_WORK_DIR", "")
 if __name__ == "__main__":
     model_name = "Mistral-DNA-v1-1.6B-hg38"
     genome_fa = os.path.join(
-        root_output_dir, f"refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+        root_output_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
     )
 
     cell_line = sys.argv[1]  # cell line name

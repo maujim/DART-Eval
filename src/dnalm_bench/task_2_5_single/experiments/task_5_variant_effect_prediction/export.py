@@ -6,7 +6,6 @@ import pandas as pd
 from torch.utils.data import DataLoader
 
 from ...components import VariantDataset
-from ...finetune import ChromatinEndToEndDataset
 
 work_dir = os.environ.get("DART_WORK_DIR", "")
 
@@ -18,7 +17,7 @@ if __name__ == "__main__":
     device = "cuda"
     chroms = None
 
-    out_path = os.path.join(work_dir, f"task_5_variant_effect_prediction/data.h5")
+    out_path = os.path.join(work_dir, "task_5_variant_effect_prediction/data.h5")
 
     with h5py.File(out_path, "w") as f:
         variants_bed = os.path.join(

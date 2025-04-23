@@ -40,7 +40,7 @@ if __name__ == "__main__":
     batch_size = 2048
     cell_lines = ["GM12878", "H1ESC", "HEPG2", "IMR90", "K562"]
 
-    out_path = os.path.join(work_dir, f"task_4_chromatin_activity/data.h5")
+    out_path = os.path.join(work_dir, "task_4_chromatin_activity/data.h5")
 
     with h5py.File(out_path, "w") as f:
         for cell_line in cell_lines:

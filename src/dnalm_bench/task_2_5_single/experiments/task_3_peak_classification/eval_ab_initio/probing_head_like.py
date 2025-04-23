@@ -7,7 +7,6 @@ import torch
 
 from ....training import (
     CNNSequenceBaselinePredictor,
-    LargeCNNSlicedEmbeddingsPredictor,
     PeaksEmbeddingsDataset,
     eval_peak_classifier,
 )

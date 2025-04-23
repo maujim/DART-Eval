@@ -1,7 +1,6 @@
 import json
 import sys
 
-import numpy as np
 from statsmodels.stats.proportion import proportion_confint
 
 # Sample JSON file paths for each model (replace these paths with actual paths)
@@ -64,10 +63,10 @@ def generate_latex_table_per_cell_type(model_json_files, num_ccres):
         max_values["test_auprc"],
     ) = underline_max_values(model_json_files, num_ccres)
 
-    latex = f"""
-\\begin{{table}}[ht]
+    latex = """
+\\begin{table}[ht]
 \\centering
-\\begin{{tabular}}{{|c|c|c|c|}}
+\\begin{tabular}{|c|c|c|c|}
 \\hline
 Model & Accuracy \\\\ \\hline
 """
@@ -94,9 +93,9 @@ Model & Accuracy \\\\ \\hline
 
         # latex += f"& {model} & {acc_str} & {paired_acc_str} & {auroc_str} & {auprc_str} \\\\ \n"
 
-    latex += f"""\\hline
-\\end{{tabular}}
-\\end{{table}}
+    latex += """\\hline
+\\end{tabular}
+\\end{table}
 """
     return latex
 
@@ -117,7 +116,7 @@ def main():
     latex_table = generate_latex_table_per_cell_type(model_json_files, num_ccres)
 
     # Print or save the LaTeX table for the specific cell type
-    print(f"\nLaTeX Table:\n")
+    print("\nLaTeX Table:\n")
     print(latex_table)
 
 

@@ -1,8 +1,6 @@
 import os
 import sys
 
-import numpy as np
-import pandas as pd
 
 from ....chrombpnet_utils import *
 
@@ -10,7 +8,7 @@ root_output_dir = os.environ.get("DART_WORK_DIR", "")
 
 cell_line = sys.argv[1]
 genome_fa = os.path.join(
-    root_output_dir, f"refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+    root_output_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
 )
 
 chrombpnet_model_file = sys.argv[2]

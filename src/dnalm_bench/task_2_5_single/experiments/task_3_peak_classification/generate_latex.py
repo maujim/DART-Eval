@@ -1,7 +1,6 @@
 import json
 import sys
 
-import numpy as np
 from statsmodels.stats.proportion import proportion_confint
 
 # Sample JSON file paths for each model (replace these paths with actual paths)
@@ -101,10 +100,10 @@ def generate_latex_table_per_cell_type(model_metrics, cell_type):
         model_metrics, cell_type
     )
 
-    latex = f"""
-\\begin{{table}}[ht]
+    latex = """
+\\begin{table}[ht]
 \\centering
-\\begin{{tabular}}{{|c|c|c|c|}}
+\\begin{tabular}{|c|c|c|c|}
 \\hline
 Model                   & Accuracy & AUROC  & AUPRC  \\\\ \\hline
 """

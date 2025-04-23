@@ -8,19 +8,15 @@ import warnings
 import h5py
 import numpy as np
 import polars as pl
-import pyfaidx
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from ncls import NCLS
 from sklearn.metrics import average_precision_score, matthews_corrcoef, roc_auc_score
-from torch.nn.utils import clip_grad_norm_
-from torch.utils.data import DataLoader, Dataset, IterableDataset, get_worker_info
+from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 
 # from scipy.stats import wilcoxon
 from tqdm import tqdm
 
-from ...utils import one_hot_encode
 
 
 class EmbeddingsDataset(IterableDataset):

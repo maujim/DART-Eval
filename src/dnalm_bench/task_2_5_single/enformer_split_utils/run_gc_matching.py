@@ -1,7 +1,6 @@
 import argparse
 import os
 
-import pandas as pd
 
 
 def parse_args():

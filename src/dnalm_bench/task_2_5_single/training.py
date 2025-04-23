@@ -10,11 +10,10 @@ import numpy as np
 import polars as pl
 import pyBigWig
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from ncls import NCLS
 from sklearn.metrics import average_precision_score, matthews_corrcoef, roc_auc_score
-from torch.utils.data import DataLoader, Dataset, IterableDataset, get_worker_info
+from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 from tqdm import tqdm
 
 from ..utils import copy_if_not_exists, log1mexp

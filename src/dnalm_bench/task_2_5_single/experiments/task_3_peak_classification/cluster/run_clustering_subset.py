@@ -10,7 +10,6 @@ from umap import UMAP
 np.random.seed(0)
 from .....embedding_clustering import (
     EmbeddingCluster,
-    load_embeddings_and_labels,
     load_embeddings_and_labels_subset,
 )
 

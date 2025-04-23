@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 import numpy as np
 import pandas as pd
@@ -46,19 +45,19 @@ def main():
     print("Loading peak data")
     peak_file = os.path.join(
         root_output_dir,
-        f"task_3_peak_classification/processed_inputs/peaks_by_cell_label_unique_dataloader_format.tsv",
+        "task_3_peak_classification/processed_inputs/peaks_by_cell_label_unique_dataloader_format.tsv",
     )
     peak_data = pd.read_csv(peak_file, sep="\t")
 
     print("Loading motif data")
     motif_family_file = os.path.join(
-        root_output_dir, f"task_2_footprinting/input_data/H12CORE_motifs.tsv"
+        root_output_dir, "task_2_footprinting/input_data/H12CORE_motifs.tsv"
     )
     motif_family_data = pd.read_csv(motif_family_file, sep="\t", index_col=0)
 
     print("Loading FIMO results")
     fimo_base_dir = os.path.join(
-        root_output_dir, f"task_3_peak_classification/processed_inputs/fimo/"
+        root_output_dir, "task_3_peak_classification/processed_inputs/fimo/"
     )
     cell_line_list = ["K562", "GM12878", "HEPG2", "IMR90", "H1ESC"]
     fimo_file_list = []
@@ -80,7 +79,7 @@ def main():
     motif_table_filled.to_csv(
         os.path.join(
             root_output_dir,
-            f"task_3_peak_classification/processed_inputs/fimo/motif_count_matrix_total_hits.tsv",
+            "task_3_peak_classification/processed_inputs/fimo/motif_count_matrix_total_hits.tsv",
         ),
         sep="\t",
         header=True,

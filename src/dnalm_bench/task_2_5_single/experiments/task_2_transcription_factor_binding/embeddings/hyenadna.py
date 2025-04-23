@@ -1,5 +1,4 @@
 import os
-import sys
 
 from ....components import FootprintingDataset
 from ....embeddings import HyenaDNAEmbeddingExtractor

@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-from sklearn.metrics.pairwise import manhattan_distances
 
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 import matplotlib.pyplot as plt
@@ -9,11 +8,8 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import mannwhitneyu, pearsonr, spearmanr
 from sklearn.metrics import (
-    auc,
     average_precision_score,
-    precision_recall_curve,
     roc_auc_score,
-    roc_curve,
 )
 
 os.environ["DART_WORK_DIR"] = "/oak/stanford/groups/akundaje/arpitas/dart-eval"

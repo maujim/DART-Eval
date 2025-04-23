@@ -15,7 +15,7 @@ if __name__ == "__main__":
         work_dir, "refs/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
     )
     elements_tsv = os.path.join(
-        work_dir, f"task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
+        work_dir, "task_1_ccre/processed_inputs/ENCFF420VPZ_processed.tsv"
     )
 
     chroms_train = [
@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     chroms_test = ["chr5", "chr10", "chr14", "chr18", "chr20", "chr22"]
 
-    out_path = os.path.join(work_dir, f"task_1_ccre/data.h5")
+    out_path = os.path.join(work_dir, "task_1_ccre/data.h5")
 
     batch_size = 10000
 

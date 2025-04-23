@@ -4,9 +4,7 @@ import json
 import os
 import shutil
 import warnings
-from abc import ABCMeta, abstractmethod
 
-import h5py
 import numpy as np
 import polars as pl
 import pyBigWig

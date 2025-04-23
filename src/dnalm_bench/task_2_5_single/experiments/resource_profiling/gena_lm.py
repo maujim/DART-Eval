@@ -1,5 +1,4 @@
 import os
-import sys
 
 from ...finetune import ChromatinEndToEndDataset
 from ...profile import GENALMModel, profile_model_resources

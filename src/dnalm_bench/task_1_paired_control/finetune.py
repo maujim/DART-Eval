@@ -1,17 +1,12 @@
-import hashlib
 import importlib
 import json
 import os
-import shutil
 import warnings
-from abc import ABCMeta, abstractmethod
 
-import numpy as np
-import polars as pl
 import torch
 import torch.nn.functional as F
 from sklearn.metrics import average_precision_score, matthews_corrcoef, roc_auc_score
-from torch.utils.data import ConcatDataset, DataLoader, Dataset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import (
     AutoModel,
@@ -21,7 +16,7 @@ from transformers import (
 )
 
 from ..finetune import HFClassifierModel, LoRAModule
-from ..utils import NoModule, copy_if_not_exists, one_hot_encode, onehot_to_chars
+from ..utils import NoModule, onehot_to_chars
 
 
 def train_finetuned_classifier(

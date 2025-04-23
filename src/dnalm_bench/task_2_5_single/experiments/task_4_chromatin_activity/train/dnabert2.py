@@ -1,7 +1,6 @@
 import os
 import sys
 
-from torch.utils.data import DataLoader
 
 from ....training import (
     AssayEmbeddingsDataset,
